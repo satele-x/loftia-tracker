@@ -79,9 +79,10 @@ function mergeItem(it, C) {
   const p = U.items[it.id] || {};
   return {
     id: it.id, official: true, name: it.name, note: it.note || '', myNote: p.note || '', after: it.after || '',
-    parts: (it.needs || []).map(l => ({ label: l, on: !!(p.parts && p.parts[partKey(l)]) })),
+    // if this entry was ticked before it had materials, carry the tick over to all of them
+    parts: (it.needs || []).map(l => ({ label: l, on: !!(p.parts && p.parts[partKey(l)]) || (!!p.d && !p.parts) })),
     pips: C.pipLabels.map((_, i) => !!(p.p && p.p[i])),
-    done: !!p.d, pinned: !!p.pin, fav: !!p.fav
+    done: (it.needs && it.needs.length) ? false : !!p.d, pinned: !!p.pin, fav: !!p.fav
   };
 }
 const customItem = x => ({ id: x.id || rid(), official: false, name: x.name || '?', note: x.note || '', myNote: '', after: x.after || '',
