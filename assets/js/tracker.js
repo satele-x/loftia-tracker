@@ -369,7 +369,7 @@ function renderCat() {
   else if (sort === 'fav') items.sort((a, b) => b.fav - a.fav);
   else if (sort === 'pin') items.sort((a, b) => b.pinned - a.pinned);
   const emptyMsg = c.items.length === 0
-    ? `<div class="empty"><div class="big">🌱</div>No entries yet! Add them one at a time above, or paste a whole list with <b>⚙ Edit → Paste a list</b>.</div>`
+    ? `<div class="empty"><div class="big">🌱</div>No entries yet${c.official ? ' — this list is still being filled in' : '! Add them one at a time above, or paste a whole list with <b>⚙ Edit → Paste a list</b>'}.</div>`
     : U.ui.pinOnly && !q ? `<div class="empty"><div class="big">📍</div>Nothing pinned in ${esc(c.name)} yet — tap 📍 on anything you're working towards.</div>`
     : `<div class="empty"><div class="big">${U.ui.hideDone ? '🎉' : '🔍'}</div>${U.ui.hideDone && !q ? 'Everything here is done — yay!' : 'Nothing matches that search.'}</div>`;
   v.innerHTML = `
@@ -391,7 +391,7 @@ function renderCat() {
         <option value="pin" ${sort === 'pin' ? 'selected' : ''}>📌 first</option>
       </select>
     </div>
-    <form class="add-row" id="addForm"><input id="newItem" placeholder="add your own to ${esc(c.name)}…  (tip: “Name - note”)" autocomplete="off" aria-label="Add an entry"><button type="submit">add</button></form>
+    ${c.official ? '' : `<form class="add-row" id="addForm"><input id="newItem" placeholder="add to ${esc(c.name)}…  (tip: “Name - note”)" autocomplete="off" aria-label="Add an entry"><button type="submit">add</button></form>`}
     ${items.length ? `<div class="list">${items.map(it => itemCard(c, it)).join('')}</div>` : emptyMsg}`;
 }
 
