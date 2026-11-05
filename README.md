@@ -58,6 +58,14 @@ When someone opens the page, the logbook combines the two. It never stores anyth
 ### ⭐ The golden rule: never change an `id` once it's live
 Progress is saved against the `id`. You can rename, re-note, reorder or move entries freely, but if you change or delete an `id`, people lose their ticks on that entry. New entries need new, unique IDs (the convention is `menu.category.entry-name`). The validator warns you if an ID disappears compared to your last git commit.
 
+**Need to merge or move an entry?** (e.g. five quests that turned out to be parts of one big quest) Delete the old entries and add a `"moved"` map at the top of the file, next to `"menus"`:
+```json
+"moved": {
+  "quests.main-story.blind-date": {"to": "quests.main-story.too-many-spores-spoil-the-soup", "part": "Blind Date"}
+}
+```
+Anyone who had ticked the old entry gets that tick carried over: onto the named `part` tag, or onto the whole entry if you leave `part` out. Pins come along too. Keep these lines around for a while so returning visitors get migrated.
+
 Changing a `needs` amount (`Carrot ×4` → `Carrot ×5`) keeps the tick, because ticks are matched on the item name ("carrot"), not the number.
 
 ## Adding another game 🎮

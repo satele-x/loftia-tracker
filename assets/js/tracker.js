@@ -59,6 +59,33 @@ function loadUser() {
 
 let DATA = null, IDX = null, U = loadUser(), state = null, NEW = new Set();
 
+/* ---------- entries you've moved/merged in the data file ---------- */
+// data file: "moved": { "old-id": { "to": "new-id", "part": "Tag name (optional)" } }
+// Carries a visitor's ticks/pins on the old entry over to the new one, once.
+function applyMoves() {
+  const mv = DATA.moved || {};
+  Object.keys(mv).forEach(oldId => {
+    const p = U.items[oldId], m = mv[oldId];
+    if (!p || !m || !IDX.items[m.to]) return;
+    const q = U.items[m.to] = U.items[m.to] || {};
+    const target = IDX.items[m.to];
+    if (q.d && !q.parts && target.needs && target.needs.length) { // it was ticked before it had parts
+      q.parts = {}; target.needs.forEach(l => { q.parts[partKey(l)] = 1; });
+    }
+    const wasDone = p.d || (p.parts && Object.keys(p.parts).length) || (p.p && p.p.some(Boolean));
+    if (m.part) { if (wasDone) { q.parts = q.parts || {}; q.parts[partKey(m.part)] = 1; } }
+    else {
+      if (p.d) q.d = 1;
+      if (p.parts) q.parts = Object.assign({}, q.parts, p.parts);
+      if (p.p) q.p = p.p;
+    }
+    if (p.pin) q.pin = 1;
+    if (p.fav) q.fav = 1;
+    if (p.note && !q.note) q.note = p.note;
+    delete U.items[oldId];
+  });
+}
+
 /* ---------- merge DATA + U  →  state ---------- */
 function indexData() {
   IDX = { menus: {}, cats: {}, items: {}, names: {} };
@@ -701,6 +728,7 @@ async function boot() {
     return;
   }
   indexData();
+  applyMoves();
   if (DATA.name) { $('#gameTitle').textContent = `${DATA.name} Logbook`; }
 
   // what's new since last visit?

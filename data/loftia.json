@@ -1,10 +1,11 @@
 {
   "game": "loftia",
   "name": "Loftia",
-  "version": "2026.11.06",
+  "version": "2026.11.06b",
   "updated": "2026-11-06",
   "gameVersion": "Early Access",
   "sources": [{"name":"Loftia Codex","url":"https://loftiacodex.com/"},{"name":"Cluefile recipes","url":"https://cluefile.com/loftia/data/recipes/"},{"name":"Loftians inspiration guide","url":"https://loftians.com/guides/loftia-inspiration-guide/"},{"name":"Wikily fish list","url":"https://wikily.gg/loftia/fish"}],
+  "moved": {"quests.main-story.blind-date":{"to":"quests.main-story.too-many-spores-spoil-the-soup","part":"Blind Date"},"quests.main-story.bloom-and-gloom":{"to":"quests.main-story.too-many-spores-spoil-the-soup","part":"Bloom and Gloom"},"quests.main-story.hope-exe":{"to":"quests.main-story.too-many-spores-spoil-the-soup","part":"Hope.exe"},"quests.main-story.never-too-mush":{"to":"quests.main-story.too-many-spores-spoil-the-soup","part":"Never Too Mush"},"quests.main-story.rooting-for-survival":{"to":"quests.main-story.too-many-spores-spoil-the-soup","part":"Rooting for Survival"}},
   "menus": [
     { "id": "quests", "name": "Quests", "icon": "📜", "color": 4, "cats": [
       { "id": "quests.main-story", "name": "Main Story", "icon": "📖", "ordered": true, "items": [
@@ -35,12 +36,7 @@
         {"id":"quests.main-story.mending-whats-broken","name":"Mending What's Broken","note":"#25 · with Mita"},
         {"id":"quests.main-story.following-the-crumbs","name":"Following The Crumbs","note":"#26 · with Pebble"},
         {"id":"quests.main-story.the-shroom-next-door","name":"The Shroom Next Door","note":"#27 · with Pebble, Dr. Marie"},
-        {"id":"quests.main-story.too-many-spores-spoil-the-soup","name":"Too Many Spores Spoil the Soup","note":"#28 · with Kassim, Dr. Marie, Atlas, Amani, Hazel, Pebble & more"},
-        {"id":"quests.main-story.blind-date","name":"Blind Date","note":"#29"},
-        {"id":"quests.main-story.bloom-and-gloom","name":"Bloom and Gloom","note":"#30 · with Amani"},
-        {"id":"quests.main-story.hope-exe","name":"Hope.exe","note":"#31 · with Atlas"},
-        {"id":"quests.main-story.never-too-mush","name":"Never Too Mush","note":"#32"},
-        {"id":"quests.main-story.rooting-for-survival","name":"Rooting for Survival","note":"#33 · with Hazel, Herb"}
+        {"id":"quests.main-story.too-many-spores-spoil-the-soup","name":"Too Many Spores Spoil the Soup","note":"#28 · 5 parts · with Kassim, Dr. Marie, Atlas, Amani, Hazel, Pebble & more","needs":["Blind Date","Bloom and Gloom","Hope.exe","Never Too Mush","Rooting for Survival"]}
       ]},
       { "id": "quests.pebble", "name": "Pebble", "icon": "🐾", "ordered": true, "items": [
         {"id":"quests.pebble.the-extremely-secret-surprise","name":"The Extremely Secret Surprise","note":"with Pebble","after":"The First Sprout"},

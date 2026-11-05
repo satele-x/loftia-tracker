@@ -81,11 +81,21 @@ for (const f of fs.readdirSync(path.join(root, 'data'))) {
       });
     });
   });
+  // "moved": old ids that now live somewhere else
+  const moved = d.moved || {};
+  const byId = {};
+  d.menus.forEach(m => m.cats.forEach(c => c.items.forEach(i => { byId[i.id] = i; })));
+  Object.entries(moved).forEach(([oldId, m]) => {
+    if (ids.has(oldId)) warn(where(`moved: "${oldId}" is still in the lists — it doesn't need a "moved" entry`));
+    if (!m || !byId[m.to]) { err(where(`moved: "${oldId}" points to "${m && m.to}", which doesn't exist`)); return; }
+    if (m.part && !(byId[m.to].needs || []).some(n => n.replace(/\s*[×x]\s*\d+\s*$/i, '').trim().toLowerCase() === m.part.toLowerCase()))
+      err(where(`moved: "${oldId}" → part "${m.part}" isn't one of ${m.to}'s "needs"`));
+  });
   afters.forEach(([a, ctx]) => { if (!names.has(a.toLowerCase())) warn(where(`${ctx}: "after" points to "${a}", which isn't in the list (it'll show as available)`)); });
 
   const prev = previousIds(rel);
   if (prev) {
-    const gone = [...prev].filter(id => !ids.has(id));
+    const gone = [...prev].filter(id => !ids.has(id) && !moved[id]);
     if (gone.length) warn(where(`${gone.length} id(s) removed or renamed since last commit — people lose ticks on these:\n      ${gone.slice(0, 10).join('\n      ')}${gone.length > 10 ? '\n      …' : ''}`));
   }
   console.log(`✓ ${rel}: ${d.menus.length} menus, ${count} entries, version ${d.version}`);
