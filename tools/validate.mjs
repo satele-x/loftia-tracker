@@ -74,6 +74,8 @@ for (const f of fs.readdirSync(path.join(root, 'data'))) {
         if (!it.name) err(where(`${ictx}: missing "name"`));
         if (it.needs && (!Array.isArray(it.needs) || it.needs.some(n => typeof n !== 'string'))) err(where(`${ictx}: "needs" must be a list of text`));
         if (it.needs && c.tags) warn(where(`${ictx}: has both "needs" and category "tags" — "needs" wins`));
+        if (it.pick != null && (!Number.isInteger(it.pick) || it.pick < 1 || !it.needs || it.pick > it.needs.length)) err(where(`${ictx}: "pick" must be a whole number between 1 and the number of "needs"`));
+        if (it.badges && (!Array.isArray(it.badges) || it.badges.some(b => typeof b !== 'string'))) err(where(`${ictx}: "badges" must be a list of text, e.g. ["quest"]`));
         if (it.after) afters.push([it.after, ictx]);
         const n = (it.name || '').toLowerCase();
         if (local.has(n)) warn(where(`${ictx}: same name appears twice in this category`));

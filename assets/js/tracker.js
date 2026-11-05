@@ -14,6 +14,11 @@
 'use strict';
 
 const GAME = document.body.dataset.game;
+
+/* ---------- switches ---------- */
+// Turn these back on once the lists are complete and you're adding brand-new game content:
+const SHOW_NEW_BADGES = false;  // "new!" badge + "N new entries" pop-up for entries added since someone's last visit
+const SHOW_AVAILABLE = false;   // "available" pill once an entry's "after" quest/bundle is done (locks always show)
 const KEY = `satele:${GAME}:v1`;
 
 /* ---------- helpers ---------- */
@@ -112,7 +117,8 @@ function mergeItem(it, C) {
     parts: (it.needs || []).map(l => ({ label: l, on: !!(p.parts && p.parts[partKey(l)]) || (!!p.d && !p.parts) })),
     pips: C.pipLabels.map((_, i) => !!(p.p && p.p[i])),
     done: (it.needs && it.needs.length) ? false : !!p.d, pinned: !!p.pin, fav: !!p.fav,
-    pick: it.pick && it.needs && it.pick < it.needs.length ? it.pick : 0  // "any N of these"
+    pick: it.pick && it.needs && it.pick < it.needs.length ? it.pick : 0,  // "any N of these"
+    badges: Array.isArray(it.badges) ? it.badges : []
   };
 }
 const customItem = x => ({ id: x.id || rid(), official: false, name: x.name || '?', note: x.note || '', myNote: '', after: x.after || '',
@@ -297,15 +303,16 @@ function itemCard(c, it, where) {
   if (!d && it.after) {
     const dep = questDone(it.after);
     if (dep === false) { locked = true; status = `<div class="qs lock">🔒 after “${esc(it.after)}”</div>`; }
-    else status = `<div class="qs open">✨ available</div>`;
+    else if (SHOW_AVAILABLE) status = `<div class="qs open">✨ available</div>`;
   }
+  if (it.badges && it.badges.length) status = it.badges.map(b => `<span class="qs badge">${esc(b)}</span>`).join(' ') + status;
   if (it.pick) { const on = it.parts.filter(p => p.on).length; status += `<div class="qs pick">${Math.min(on, it.pick)}/${it.pick} — pick any ${it.pick}</div>`; }
   if (!d && !locked && c.ordered && c.items.find(x => !isDone(c, x)) === it) next = true;
   return `<div class="item ${d ? 'done' : ''} ${it.pinned ? 'pinned' : ''} ${locked ? 'locked' : ''} ${next ? 'next' : ''}">
     ${next ? '<span class="next-badge">▶ next up</span>' : ''}
     ${it.pinned ? '<span class="fav-badge">📌</span>' : it.fav ? '<span class="fav-badge">⭐</span>' : ''}
     <button class="check" data-act="toggle" data-id="${esc(it.id)}" aria-label="${d ? 'Untick' : 'Tick'} ${esc(it.name)}">${CHECK_SVG}</button>
-    <div class="txt">${where ? `<div class="where">${where}</div>` : ''}<div class="nm">${esc(it.name)}${NEW.has(it.id) ? '<span class="new-pill">new!</span>' : ''}${!it.official ? '<span class="mine">✎ mine</span>' : ''}</div>${it.note ? `<div class="note">${esc(it.note)}</div>` : ''}${it.myNote ? `<div class="mynote">📝 ${esc(it.myNote)}</div>` : ''}${status}${tags}</div>
+    <div class="txt">${where ? `<div class="where">${where}</div>` : ''}<div class="nm">${esc(it.name)}${SHOW_NEW_BADGES && NEW.has(it.id) ? '<span class="new-pill">new!</span>' : ''}${!it.official ? '<span class="mine">✎ mine</span>' : ''}</div>${it.note ? `<div class="note">${esc(it.note)}</div>` : ''}${it.myNote ? `<div class="mynote">📝 ${esc(it.myNote)}</div>` : ''}${status}${tags}</div>
     <div class="acts">
       <button class="pin ${it.pinned ? 'on' : ''}" data-act="pin" data-id="${esc(it.id)}" title="${it.pinned ? 'Unpin' : 'Pin — keep it in your Pinned tab'}" aria-label="${it.pinned ? 'Unpin' : 'Pin'} ${esc(it.name)}">${it.pinned ? '📌' : '📍'}</button>
       <button class="fav ${it.fav ? 'on' : ''}" data-act="fav" data-id="${esc(it.id)}" title="Favourite" aria-label="Favourite ${esc(it.name)}">${it.fav ? '⭐' : '☆'}</button>
@@ -755,7 +762,7 @@ async function boot() {
 
   rebuild(); checkResets(); save();
   render(); renderDataInfo();
-  if (NEW.size) setTimeout(() => toast(`✨ ${NEW.size} new entr${NEW.size === 1 ? 'y' : 'ies'} added since your last visit!`), 500);
+  if (SHOW_NEW_BADGES && NEW.size) setTimeout(() => toast(`✨ ${NEW.size} new entr${NEW.size === 1 ? 'y' : 'ies'} added since your last visit!`), 500);
   else if (updated) setTimeout(() => toast('📦 lists updated — your progress is safe!'), 500);
 
   // other tabs of this site

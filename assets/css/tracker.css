@@ -179,3 +179,4 @@ select.sort{color:var(--ink)}
 .item.done .qs.pick{background:#d4f3e3;color:#2f8a60}
 .cat-note{margin:-4px 2px 12px;font-size:13px;font-weight:800;color:var(--ink-soft)}
 .gather-pick{font-size:13px;font-weight:700;margin-top:8px;line-height:1.45}
+.qs.badge{background:#e3f1ff;color:#2b6ea3;margin-right:4px;text-transform:lowercase}
