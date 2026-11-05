@@ -38,6 +38,7 @@ const freshUser = () => ({
   items: {}, cats: {}, menus: {},
   hidden: { items: {}, cats: {}, menus: {} },
   order: { menus: [], cats: {} },
+  orderCustom: { menus: false, cats: {} }, // only set when the visitor moves things themselves
   custom: { menus: [], cats: {}, items: {} }
 });
 function normalizeUser(u) {
@@ -47,6 +48,7 @@ function normalizeUser(u) {
   out.ui = Object.assign(freshUser().ui, u.ui || {});
   out.hidden = Object.assign(freshUser().hidden, u.hidden || {});
   out.order = Object.assign(freshUser().order, u.order || {});
+  out.orderCustom = Object.assign(freshUser().orderCustom, u.orderCustom || {});
   out.custom = Object.assign(freshUser().custom, u.custom || {});
   ['items', 'cats', 'menus'].forEach(k => { if (!out[k] || typeof out[k] !== 'object') out[k] = {}; });
   if (!Array.isArray(out.known)) out.known = [];
@@ -109,7 +111,8 @@ function mergeItem(it, C) {
     // if this entry was ticked before it had materials, carry the tick over to all of them
     parts: (it.needs || []).map(l => ({ label: l, on: !!(p.parts && p.parts[partKey(l)]) || (!!p.d && !p.parts) })),
     pips: C.pipLabels.map((_, i) => !!(p.p && p.p[i])),
-    done: (it.needs && it.needs.length) ? false : !!p.d, pinned: !!p.pin, fav: !!p.fav
+    done: (it.needs && it.needs.length) ? false : !!p.d, pinned: !!p.pin, fav: !!p.fav,
+    pick: it.pick && it.needs && it.pick < it.needs.length ? it.pick : 0  // "any N of these"
   };
 }
 const customItem = x => ({ id: x.id || rid(), official: false, name: x.name || '?', note: x.note || '', myNote: '', after: x.after || '',
@@ -127,7 +130,7 @@ function buildState() {
     m.cats.forEach(c => {
       if (U.hidden.cats[c.id]) return;
       const co = U.cats[c.id] || {};
-      const C = { id: c.id, official: true, name: co.name || c.name, icon: co.icon || c.icon, pipLabels: c.tags || [], ordered: !!c.ordered,
+      const C = { id: c.id, official: true, name: co.name || c.name, icon: co.icon || c.icon, note: c.note || '', pipLabels: c.tags || [], ordered: !!c.ordered,
         reset: co.reset !== undefined ? co.reset : (c.reset || ''),
         resetHour: co.resetHour != null ? co.resetHour : (c.resetHour || 0),
         resetDay: co.resetDay != null ? co.resetDay : (c.resetDay != null ? c.resetDay : 1),
@@ -137,11 +140,11 @@ function buildState() {
       M.cats.push(C);
     });
     (U.custom.cats[m.id] || []).forEach(x => M.cats.push(customCat(x)));
-    sortBy(M.cats, U.order.cats[m.id]);
+    if (U.orderCustom.cats[m.id]) sortBy(M.cats, U.order.cats[m.id]);
     menus.push(M);
   });
   (U.custom.menus || []).forEach(x => menus.push(customMenu(x)));
-  sortBy(menus, U.order.menus);
+  if (U.orderCustom.menus) sortBy(menus, U.order.menus);
   return { menus };
 }
 
@@ -189,7 +192,11 @@ function persist() {
   Object.keys(U.custom.items || {}).forEach(k => { if (!seenCats.has(k) && !custom.items[k]) custom.items[k] = U.custom.items[k]; });
   Object.keys(U.custom.cats || {}).forEach(k => { if (!seenMenus.has(k) && !custom.cats[k]) custom.cats[k] = U.custom.cats[k]; });
   U.items = items; U.cats = cats; U.menus = menus; U.custom = custom;
-  U.order = { menus: state.menus.map(m => m.id), cats: Object.fromEntries(state.menus.map(m => [m.id, m.cats.map(c => c.id)])) };
+  // remember an order only where the visitor rearranged things, so list-order changes in the data file still reach everyone else
+  U.order = {
+    menus: U.orderCustom.menus ? state.menus.map(m => m.id) : [],
+    cats: Object.fromEntries(state.menus.filter(m => U.orderCustom.cats[m.id]).map(m => [m.id, m.cats.map(c => c.id)]))
+  };
 }
 
 let saveFail = false;
@@ -212,7 +219,7 @@ function curCat() {
   return c;
 }
 function units(c, it) {
-  if (it.parts.length) return [it.parts.filter(p => p.on).length, it.parts.length];
+  if (it.parts.length) { const on = it.parts.filter(p => p.on).length, need = it.pick || it.parts.length; return [Math.min(on, need), need]; }
   if (c.pipLabels.length) return [c.pipLabels.filter((_, i) => it.pips[i]).length, c.pipLabels.length];
   return [it.done ? 1 : 0, 1];
 }
@@ -292,6 +299,7 @@ function itemCard(c, it, where) {
     if (dep === false) { locked = true; status = `<div class="qs lock">🔒 after “${esc(it.after)}”</div>`; }
     else status = `<div class="qs open">✨ available</div>`;
   }
+  if (it.pick) { const on = it.parts.filter(p => p.on).length; status += `<div class="qs pick">${Math.min(on, it.pick)}/${it.pick} — pick any ${it.pick}</div>`; }
   if (!d && !locked && c.ordered && c.items.find(x => !isDone(c, x)) === it) next = true;
   return `<div class="item ${d ? 'done' : ''} ${it.pinned ? 'pinned' : ''} ${locked ? 'locked' : ''} ${next ? 'next' : ''}">
     ${next ? '<span class="next-badge">▶ next up</span>' : ''}
@@ -310,7 +318,13 @@ function renderNeeded() {
   const v = $('#catView'), pins = allPinned(), hide = U.ui.hideDone;
   const shown = pins.filter(p => !hide || !isDone(p.c, p.it));
   const tally = new Map();
+  const picks = [];
   pins.forEach(({ it }) => {
+    if (it.pick) {
+      const left = it.pick - it.parts.filter(p => p.on).length;
+      if (left > 0) picks.push({ name: it.name, left, opts: it.parts.filter(p => !p.on).map(p => p.label) });
+      return;
+    }
     it.parts.forEach(p => {
       if (p.on) return;
       const [n, q] = splitQty(p.label), k = n.toLowerCase();
@@ -331,8 +345,9 @@ function renderNeeded() {
     </div>
     <div class="toolbar"><label class="toggle"><input type="checkbox" id="hideDone" ${hide ? 'checked' : ''}> hide done</label></div>
     ${pins.length === 0 ? `<div class="empty"><div class="big">📍</div>Nothing pinned yet!<br>Tap the <b>📍</b> on any quest, bundle or recipe to add it here — it's your “working on it right now” list. Pin a story quest and the pin hops to the next one when you finish it ✨</div>` : `
-      ${gather.length ? `<div class="gather"><div class="gather-h">🧺 Stuff to gather <span>${gather.length} thing${gather.length === 1 ? '' : 's'}</span></div>
+      ${gather.length || picks.length ? `<div class="gather"><div class="gather-h">🧺 Stuff to gather <span>${gather.length + picks.length} thing${gather.length + picks.length === 1 ? '' : 's'}</span></div>
         <div class="gather-list">${gather.map(g => `<span class="g" title="for: ${esc(g.for.join(', '))}">${esc(g.n)}${g.qtyKnown ? ` <b>×${g.q}</b>` : (g.for.length > 1 ? ` <b>(${g.for.length} bundles)</b>` : '')}</span>`).join('')}</div>
+        ${picks.map(pk => `<div class="gather-pick"><b>${esc(pk.name)}:</b> any ${pk.left} more of ${esc(pk.opts.join(', '))}</div>`).join('')}
         <div class="hint">Unticked items from your pinned entries, added up. Tick them off on the cards below as you hand them in.</div></div>` : ''}
       ${[...groups.values()].map(g => `<div class="grp-h">${esc(g.c.icon)} ${esc(g.c.name)} <span>· ${esc(g.m.name)}</span></div><div class="list">${g.items.map(it => itemCard(g.c, it)).join('')}</div>`).join('') || `<div class="empty"><div class="big">🎉</div>Everything you pinned is done!</div>`}
     `}`;
@@ -363,6 +378,7 @@ function renderCat() {
       <div class="progress"><div class="bar"><i style="width:${pct}%"></i></div><span class="pct">${s.n}/${s.total} · ${pct}%</span></div>
       <button class="small-btn" data-act="editCat">⚙ Edit</button>
     </div>
+    ${c.note ? `<div class="cat-note">${esc(c.note)}</div>` : ''}
     <div class="toolbar">
       <label class="search">🔍<input id="q" placeholder="search ${esc(c.name.toLowerCase())}…" value="${esc(U.ui.q || '')}" aria-label="Search"></label>
       <label class="toggle"><input type="checkbox" id="hideDone" ${U.ui.hideDone ? 'checked' : ''}> hide done</label>
@@ -577,7 +593,7 @@ function openCatModal(c) {
     };
     if (!isNew) {
       const cats = menu.cats, idx = () => cats.indexOf(c);
-      const move = d => { const i = idx(), j = i + d; if (j < 0 || j >= cats.length) return; cats.splice(i, 1); cats.splice(j, 0, c); save(); render(); };
+      const move = d => { const i = idx(), j = i + d; if (j < 0 || j >= cats.length) return; cats.splice(i, 1); cats.splice(j, 0, c); U.orderCustom.cats[menu.id] = true; save(); render(); };
       m.querySelector('[data-m=left]').onclick = () => move(-1);
       m.querySelector('[data-m=right]').onclick = () => move(1);
       m.querySelector('[data-m=uncheck]').onclick = () => askConfirm('Untick everything?', `All ticks in <b>${esc(c.name)}</b> will be cleared (entries stay).`, 'untick all', () => { c.items.forEach(it => setAll(c, it, false)); save(); render(); toast('fresh start ☀️'); });
@@ -610,7 +626,7 @@ function openMenuModal(menu) {
       save(); closeModal(); render();
     };
     if (!isNew) {
-      const move = d => { const i = state.menus.indexOf(menu), j = i + d; if (j < 0 || j >= state.menus.length) return; state.menus.splice(i, 1); state.menus.splice(j, 0, menu); save(); render(); };
+      const move = d => { const i = state.menus.indexOf(menu), j = i + d; if (j < 0 || j >= state.menus.length) return; state.menus.splice(i, 1); state.menus.splice(j, 0, menu); U.orderCustom.menus = true; save(); render(); };
       m.querySelector('[data-m=left]').onclick = () => move(-1);
       m.querySelector('[data-m=right]').onclick = () => move(1);
       const hide = m.querySelector('[data-m=hide]');
