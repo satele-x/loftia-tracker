@@ -1,5 +1,5 @@
 /* ==========================================================
-   satele logbooks — tracker engine
+   satele's logbook — tracker engine
    ----------------------------------------------------------
    Two layers:
    1. DATA  — the official lists, fetched from /data/<game>.json.

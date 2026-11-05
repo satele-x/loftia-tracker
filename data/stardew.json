@@ -1,0 +1,57 @@
+{
+  "game": "stardew",
+  "name": "Stardew Valley",
+  "version": "2026.11.06",
+  "updated": "2026-11-06",
+  "gameVersion": "standard bundles (not Remixed)",
+  "sources": [{"name":"Stardew Valley Wiki – Bundles","url":"https://wiki.stardewvalley.net/Bundles"}],
+  "menus": [
+    { "id": "community-center", "name": "Community Center", "icon": "🌱", "color": 2, "cats": [
+      { "id": "community-center.crafts-room", "name": "Crafts Room", "icon": "🧺", "note": "Room reward: bridge repaired → the Quarry", "items": [
+        {"id":"community-center.crafts-room.spring-foraging-bundle","name":"Spring Foraging Bundle","note":"Reward: Spring Seeds ×30","needs":["Wild Horseradish","Daffodil","Leek","Dandelion"]},
+        {"id":"community-center.crafts-room.summer-foraging-bundle","name":"Summer Foraging Bundle","note":"Reward: Summer Seeds ×30","needs":["Grape","Spice Berry","Sweet Pea"]},
+        {"id":"community-center.crafts-room.fall-foraging-bundle","name":"Fall Foraging Bundle","note":"Reward: Fall Seeds ×30","needs":["Common Mushroom","Wild Plum","Hazelnut","Blackberry"]},
+        {"id":"community-center.crafts-room.winter-foraging-bundle","name":"Winter Foraging Bundle","note":"Reward: Winter Seeds ×30","needs":["Winter Root","Crystal Fruit","Snow Yam","Crocus"]},
+        {"id":"community-center.crafts-room.construction-bundle","name":"Construction Bundle","note":"Wood goes in as two stacks of 99 · Reward: Charcoal Kiln","needs":["Wood ×198","Stone ×99","Hardwood ×10"]},
+        {"id":"community-center.crafts-room.exotic-foraging-bundle","name":"Exotic Foraging Bundle","note":"Reward: Autumn's Bounty ×5","needs":["Coconut","Cactus Fruit","Cave Carrot","Red Mushroom","Purple Mushroom","Maple Syrup","Oak Resin","Pine Tar","Morel"],"pick":5}
+      ]},
+      { "id": "community-center.pantry", "name": "Pantry", "icon": "🥕", "note": "Room reward: the Greenhouse on your farm", "items": [
+        {"id":"community-center.pantry.spring-crops-bundle","name":"Spring Crops Bundle","note":"Reward: Speed-Gro ×20","needs":["Parsnip","Green Bean","Cauliflower","Potato"]},
+        {"id":"community-center.pantry.summer-crops-bundle","name":"Summer Crops Bundle","note":"Reward: Quality Sprinkler","needs":["Tomato","Hot Pepper","Blueberry","Melon"]},
+        {"id":"community-center.pantry.fall-crops-bundle","name":"Fall Crops Bundle","note":"Reward: Bee House","needs":["Corn","Eggplant","Pumpkin","Yam"]},
+        {"id":"community-center.pantry.quality-crops-bundle","name":"Quality Crops Bundle","note":"Reward: Preserves Jar","needs":["Parsnip (gold) ×5","Melon (gold) ×5","Pumpkin (gold) ×5","Corn (gold) ×5"],"pick":3},
+        {"id":"community-center.pantry.animal-bundle","name":"Animal Bundle","note":"Reward: Cheese Press","needs":["Large Milk","Large Brown Egg","Large Egg","Large Goat Milk","Wool","Duck Egg"],"pick":5},
+        {"id":"community-center.pantry.artisan-bundle","name":"Artisan Bundle","note":"Reward: Keg","needs":["Truffle Oil","Cloth","Goat Cheese","Cheese","Honey","Jelly","Apple","Apricot","Orange","Peach","Pomegranate","Cherry"],"pick":6}
+      ]},
+      { "id": "community-center.fish-tank", "name": "Fish Tank", "icon": "🐟", "note": "Room reward: glittering boulder removed + Copper Pan", "items": [
+        {"id":"community-center.fish-tank.river-fish-bundle","name":"River Fish Bundle","note":"Reward: Deluxe Bait ×30","needs":["Sunfish","Catfish","Shad","Tiger Trout"]},
+        {"id":"community-center.fish-tank.lake-fish-bundle","name":"Lake Fish Bundle","note":"Reward: Dressed Spinner","needs":["Largemouth Bass","Carp","Bullhead","Sturgeon"]},
+        {"id":"community-center.fish-tank.ocean-fish-bundle","name":"Ocean Fish Bundle","note":"Reward: Warp Totem: Beach ×5","needs":["Sardine","Tuna","Red Snapper","Tilapia"]},
+        {"id":"community-center.fish-tank.night-fishing-bundle","name":"Night Fishing Bundle","note":"Reward: Glow Ring","needs":["Walleye","Bream","Eel"]},
+        {"id":"community-center.fish-tank.crab-pot-bundle","name":"Crab Pot Bundle","note":"Reward: Crab Pot ×3","needs":["Lobster","Crayfish","Crab","Cockle","Mussel","Shrimp","Snail","Periwinkle","Oyster","Clam"],"pick":5},
+        {"id":"community-center.fish-tank.specialty-fish-bundle","name":"Specialty Fish Bundle","note":"Reward: Dish O' The Sea ×5","needs":["Pufferfish","Ghostfish","Sandfish","Woodskip"]}
+      ]},
+      { "id": "community-center.boiler-room", "name": "Boiler Room", "icon": "⛏️", "note": "Room reward: minecarts repaired (fast travel)", "items": [
+        {"id":"community-center.boiler-room.blacksmiths-bundle","name":"Blacksmith's Bundle","note":"Reward: Furnace","needs":["Copper Bar","Iron Bar","Gold Bar"]},
+        {"id":"community-center.boiler-room.geologists-bundle","name":"Geologist's Bundle","note":"Reward: Omni Geode ×5","needs":["Quartz","Earth Crystal","Frozen Tear","Fire Quartz"]},
+        {"id":"community-center.boiler-room.adventurers-bundle","name":"Adventurer's Bundle","note":"Reward: Small Magnet Ring","needs":["Slime ×99","Bat Wing ×10","Solar Essence","Void Essence"],"pick":2}
+      ]},
+      { "id": "community-center.bulletin-board", "name": "Bulletin Board", "icon": "📌", "note": "Room reward: +2 hearts with every non-datable villager you've met", "items": [
+        {"id":"community-center.bulletin-board.chefs-bundle","name":"Chef's Bundle","note":"Reward: Pink Cake ×3","needs":["Maple Syrup","Fiddlehead Fern","Truffle","Poppy","Maki Roll","Fried Egg"]},
+        {"id":"community-center.bulletin-board.dye-bundle","name":"Dye Bundle","note":"Reward: Seed Maker","needs":["Red Mushroom","Sea Urchin","Sunflower","Duck Feather","Aquamarine","Red Cabbage"]},
+        {"id":"community-center.bulletin-board.field-research-bundle","name":"Field Research Bundle","note":"Reward: Recycling Machine","needs":["Purple Mushroom","Nautilus Shell","Chub","Frozen Geode"]},
+        {"id":"community-center.bulletin-board.fodder-bundle","name":"Fodder Bundle","note":"Reward: Heater","needs":["Wheat ×10","Hay ×10","Apple ×3"]},
+        {"id":"community-center.bulletin-board.enchanters-bundle","name":"Enchanter's Bundle","note":"Reward: Gold Bar ×5","needs":["Oak Resin","Wine","Rabbit's Foot","Pomegranate"]}
+      ]},
+      { "id": "community-center.vault", "name": "Vault", "icon": "💰", "note": "Room reward: the bus is fixed → Calico Desert (42,500g total)", "items": [
+        {"id":"community-center.vault.2-500g","name":"2,500g","note":"Reward: Chocolate Cake ×3"},
+        {"id":"community-center.vault.5-000g","name":"5,000g","note":"Reward: Quality Fertilizer ×30"},
+        {"id":"community-center.vault.10-000g","name":"10,000g","note":"Reward: Lightning Rod"},
+        {"id":"community-center.vault.25-000g","name":"25,000g","note":"Reward: Crystalarium"}
+      ]},
+      { "id": "community-center.abandoned-jojamart", "name": "Abandoned JojaMart", "icon": "🏚️", "note": "Unlocks after the Community Center is done (or via Joja) · reward: the Movie Theater", "items": [
+        {"id":"community-center.abandoned-jojamart.missing-bundle-bundle","name":"Missing Bundle Bundle","note":"Reward: Movie Theater","needs":["Wine (silver+)","Dinosaur Mayonnaise","Prismatic Shard","Ancient Fruit (gold) ×5","Void Salmon (gold)","Caviar"],"pick":5}
+      ]}
+    ]}
+  ]
+}

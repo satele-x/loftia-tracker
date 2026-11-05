@@ -1,7 +1,7 @@
 {
   "game": "loftia",
   "name": "Loftia",
-  "version": "2026.11.06c",
+  "version": "2026.11.06f",
   "updated": "2026-11-06",
   "gameVersion": "Early Access",
   "sources": [{"name":"Loftia Codex","url":"https://loftiacodex.com/"},{"name":"Cluefile recipes","url":"https://cluefile.com/loftia/data/recipes/"},{"name":"Loftians inspiration guide","url":"https://loftians.com/guides/loftia-inspiration-guide/"},{"name":"Wikily fish list","url":"https://wikily.gg/loftia/fish"}],
@@ -377,6 +377,26 @@
         {"id":"collections.memories.amateur-fisher","name":"Amateur Fisher"},
         {"id":"collections.memories.expert-fisher","name":"Expert Fisher"},
         {"id":"collections.memories.bloom-bug","name":"Bloom Bug"}
+      ]}
+    ]},
+    { "id": "pets", "name": "Pets", "icon": "🐾", "color": 0, "cats": [
+      { "id": "pets.rescues", "name": "Rescues", "icon": "🐶", "note": "Pets you rescue by finding clues and feeding them. You need a Basic Habitat for each pet you keep.", "items": [
+        {"id":"pets.rescues.dog","name":"Dog","note":"Quest: Notes From the Fauna (Joanna, Hanging Gardens) · reward: Basic Habitat recipe","after":"Field Research","needs":["Dog clues ×5","Feed the dog"]},
+        {"id":"pets.rescues.cat","name":"Cat","note":"Quest: Fur Real? (Joanna) · clues are in Loftia City","after":"Notes From the Fauna","needs":["Cat clues ×10","Cabbage ×6","Watermelon ×3"]},
+        {"id":"pets.rescues.capybara","name":"Capybara","note":"Quest: Fur-ther Investigation (Mita & Joanna) · clues are spread across districts","after":"Mending What's Broken","needs":["Capybara clues ×30","Feed the capybara"]},
+        {"id":"pets.rescues.duck","name":"Duck","note":"Clues are found while using the Locator in an urbex","needs":["Duck clues ×50","Feed the duck"]},
+        {"id":"pets.rescues.alpaca","name":"Alpaca","note":"Clues have a chance of being found after completing an adventure","needs":["Alpaca clues ×50","Feed the alpaca"]}
+      ]},
+      { "id": "pets.special", "name": "Special pets", "icon": "✨", "note": "Not obtainable through normal play", "items": [
+        {"id":"pets.special.wheelie","name":"Wheelie","note":"Kickstarter backer pet"},
+        {"id":"pets.special.waddle","name":"Waddle","note":"Kickstarter backer pet"},
+        {"id":"pets.special.greeny","name":"Greeny","note":"Robot pet · paid: Supporter Pack or Growing Together Bundle"}
+      ]},
+      { "id": "pets.habitats", "name": "Habitats", "icon": "🏠", "note": "You start with room for 1 habitat; permits add more", "items": [
+        {"id":"pets.habitats.basic-habitat","name":"Basic Habitat","note":"Craft at Project Station Lv.2 · recipe from Notes From the Fauna","after":"Notes From the Fauna","needs":["Flexible Lumber ×2","Resin ×2","Jute Fabric ×2"]},
+        {"id":"pets.habitats.habitat-permit-2","name":"Habitat Permit (2nd habitat)","needs":["Dew ×500"]},
+        {"id":"pets.habitats.habitat-permit-3","name":"Habitat Permit (3rd habitat)","needs":["Dew ×2500","Bloom ×10"]},
+        {"id":"pets.habitats.habitat-permit-4","name":"Habitat Permit (4th habitat)","needs":["Dew ×5000","Bloom ×25"]}
       ]}
     ]},
     { "id": "dailies", "name": "Dailies", "icon": "🔁", "color": 2, "cats": [
