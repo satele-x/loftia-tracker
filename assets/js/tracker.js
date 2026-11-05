@@ -1,0 +1,721 @@
+/* ==========================================================
+   satele logbooks — tracker engine
+   ----------------------------------------------------------
+   Two layers:
+   1. DATA  — the official lists, fetched from /data/<game>.json.
+              Edit that file + redeploy and every visitor gets the update.
+   2. U     — this visitor's own layer, kept in localStorage:
+              ticks/pins/notes keyed by each entry's permanent `id`,
+              plus anything they add, rename or hide themselves.
+   The page shows `state` = DATA merged with U. On every change we
+   pull the visitor's bits back out of `state` into U and save U.
+   ========================================================== */
+(function () {
+'use strict';
+
+const GAME = document.body.dataset.game;
+const KEY = `satele:${GAME}:v1`;
+
+/* ---------- helpers ---------- */
+const $ = s => document.querySelector(s);
+const rid = () => 'u-' + Math.random().toString(36).slice(2, 10);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const clone = o => JSON.parse(JSON.stringify(o));
+const splitQty = label => { const m = String(label).match(/^(.*?)\s*[×x]\s*(\d+)\s*$/i); return m ? [m[1].trim(), +m[2]] : [String(label).trim(), 1]; };
+const partKey = label => splitQty(label)[0].toLowerCase();
+
+const EMOJIS = ['🍳','🧵','🪚','🔧','⚗️','🛠️','🪴','🌱','🍰','🍜','🧋','🐟','🏺','📟','💭','🐾','👗','🪑','🧸','🌸','⭐','💎','🗝️','📝','☀️','🌙','🎀','🍓','🦋','🐚','🎣','🏝️','📜','🔬','💡','🔁'];
+const MENU_COLORS = [['#ff9ec7','#f472a8'],['#9fd5ff','#5bb2ee'],['#9be7c4','#4cc794'],['#c9b6ff','#9b83f0'],['#ffc2a1','#f59a6c'],['#ffe08a','#e6b93b']];
+const WEEKDAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
+/* ---------- storage ---------- */
+let storageOK = true;
+try { const t = '__satele_test'; localStorage.setItem(t, '1'); localStorage.removeItem(t); } catch (e) { storageOK = false; }
+
+const freshUser = () => ({
+  v: 1, dataVersion: null, known: [],
+  ui: { menu: null, cat: {}, hideDone: false, pinOnly: false, sort: 'order', q: '' },
+  items: {}, cats: {}, menus: {},
+  hidden: { items: {}, cats: {}, menus: {} },
+  order: { menus: [], cats: {} },
+  custom: { menus: [], cats: {}, items: {} }
+});
+function normalizeUser(u) {
+  const f = freshUser();
+  if (!u || typeof u !== 'object') return f;
+  const out = Object.assign(f, u);
+  out.ui = Object.assign(freshUser().ui, u.ui || {});
+  out.hidden = Object.assign(freshUser().hidden, u.hidden || {});
+  out.order = Object.assign(freshUser().order, u.order || {});
+  out.custom = Object.assign(freshUser().custom, u.custom || {});
+  ['items', 'cats', 'menus'].forEach(k => { if (!out[k] || typeof out[k] !== 'object') out[k] = {}; });
+  if (!Array.isArray(out.known)) out.known = [];
+  return out;
+}
+function loadUser() {
+  if (!storageOK) return freshUser();
+  try { return normalizeUser(JSON.parse(localStorage.getItem(KEY) || 'null')); } catch (e) { return freshUser(); }
+}
+
+let DATA = null, IDX = null, U = loadUser(), state = null, NEW = new Set();
+
+/* ---------- merge DATA + U  →  state ---------- */
+function indexData() {
+  IDX = { menus: {}, cats: {}, items: {}, names: {} };
+  DATA.menus.forEach(m => {
+    IDX.menus[m.id] = m;
+    m.cats.forEach(c => { IDX.cats[c.id] = c; c.items.forEach(it => { IDX.items[it.id] = it; }); });
+  });
+}
+function sortBy(arr, order) {
+  if (!order || !order.length) return arr;
+  const pos = new Map(order.map((id, i) => [id, i]));
+  const keyed = arr.map((x, i) => [pos.has(x.id) ? pos.get(x.id) : 1e6 + i, x]);
+  keyed.sort((a, b) => a[0] - b[0]);
+  keyed.forEach((k, i) => { arr[i] = k[1]; });
+  return arr;
+}
+function mergeItem(it, C) {
+  const p = U.items[it.id] || {};
+  return {
+    id: it.id, official: true, name: it.name, note: it.note || '', myNote: p.note || '', after: it.after || '',
+    parts: (it.needs || []).map(l => ({ label: l, on: !!(p.parts && p.parts[partKey(l)]) })),
+    pips: C.pipLabels.map((_, i) => !!(p.p && p.p[i])),
+    done: !!p.d, pinned: !!p.pin, fav: !!p.fav
+  };
+}
+const customItem = x => ({ id: x.id || rid(), official: false, name: x.name || '?', note: x.note || '', myNote: '', after: x.after || '',
+  parts: (x.parts || []).map(p => ({ label: p.label, on: !!p.on })), pips: (x.pips || []).map(Boolean), done: !!x.done, pinned: !!x.pinned, fav: !!x.fav });
+const customCat = x => ({ id: x.id || rid(), official: false, name: x.name || 'List', icon: x.icon || '⭐', pipLabels: x.pipLabels || [], ordered: !!x.ordered,
+  reset: x.reset || '', resetHour: x.resetHour || 0, resetDay: x.resetDay != null ? x.resetDay : 1, lastReset: x.lastReset || 0, items: (x.items || []).map(customItem) });
+const customMenu = x => ({ id: x.id || rid(), official: false, name: x.name || 'My list', icon: x.icon || '⭐', color: x.color || 0, cats: (x.cats || []).map(customCat) });
+
+function buildState() {
+  const menus = [];
+  DATA.menus.forEach(m => {
+    if (U.hidden.menus[m.id]) return;
+    const mo = U.menus[m.id] || {};
+    const M = { id: m.id, official: true, name: mo.name || m.name, icon: mo.icon || m.icon, color: mo.color != null ? mo.color : (m.color || 0), cats: [] };
+    m.cats.forEach(c => {
+      if (U.hidden.cats[c.id]) return;
+      const co = U.cats[c.id] || {};
+      const C = { id: c.id, official: true, name: co.name || c.name, icon: co.icon || c.icon, pipLabels: c.tags || [], ordered: !!c.ordered,
+        reset: co.reset !== undefined ? co.reset : (c.reset || ''),
+        resetHour: co.resetHour != null ? co.resetHour : (c.resetHour || 0),
+        resetDay: co.resetDay != null ? co.resetDay : (c.resetDay != null ? c.resetDay : 1),
+        lastReset: co.lastReset || 0, items: [] };
+      c.items.forEach(it => { if (!U.hidden.items[it.id]) C.items.push(mergeItem(it, C)); });
+      (U.custom.items[c.id] || []).forEach(x => C.items.push(customItem(x)));
+      M.cats.push(C);
+    });
+    (U.custom.cats[m.id] || []).forEach(x => M.cats.push(customCat(x)));
+    sortBy(M.cats, U.order.cats[m.id]);
+    menus.push(M);
+  });
+  (U.custom.menus || []).forEach(x => menus.push(customMenu(x)));
+  sortBy(menus, U.order.menus);
+  return { menus };
+}
+
+/* ---------- state  →  U (only the visitor's own bits) ---------- */
+const stripItem = I => ({ id: I.id, name: I.name, note: I.note, after: I.after || undefined, parts: I.parts.map(p => ({ label: p.label, on: p.on })), pips: I.pips, done: I.done, pinned: I.pinned, fav: I.fav });
+const stripCat = C => ({ id: C.id, name: C.name, icon: C.icon, pipLabels: C.pipLabels, ordered: C.ordered, reset: C.reset, resetHour: C.resetHour, resetDay: C.resetDay, lastReset: C.lastReset, items: C.items.map(stripItem) });
+function persist() {
+  const items = Object.assign({}, U.items), cats = Object.assign({}, U.cats), menus = Object.assign({}, U.menus);
+  const custom = { menus: [], cats: {}, items: {} };
+  const seenCats = new Set(), seenMenus = new Set();
+  state.menus.forEach(M => {
+    if (!M.official) { custom.menus.push({ id: M.id, name: M.name, icon: M.icon, color: M.color, cats: M.cats.map(stripCat) }); return; }
+    seenMenus.add(M.id);
+    const dm = IDX.menus[M.id], mo = {};
+    if (M.name !== dm.name) mo.name = M.name;
+    if (M.icon !== dm.icon) mo.icon = M.icon;
+    if (M.color !== (dm.color || 0)) mo.color = M.color;
+    if (Object.keys(mo).length) menus[M.id] = mo; else delete menus[M.id];
+    M.cats.forEach(C => {
+      if (!C.official) { (custom.cats[M.id] = custom.cats[M.id] || []).push(stripCat(C)); return; }
+      seenCats.add(C.id);
+      const dc = IDX.cats[C.id], co = {};
+      if (C.name !== dc.name) co.name = C.name;
+      if (C.icon !== dc.icon) co.icon = C.icon;
+      if (C.reset !== (dc.reset || '')) co.reset = C.reset;
+      if (C.resetHour !== (dc.resetHour || 0)) co.resetHour = C.resetHour;
+      if (C.resetDay !== (dc.resetDay != null ? dc.resetDay : 1)) co.resetDay = C.resetDay;
+      if (C.lastReset) co.lastReset = C.lastReset;
+      if (Object.keys(co).length) cats[C.id] = co; else delete cats[C.id];
+      C.items.forEach(I => {
+        if (!I.official) { (custom.items[C.id] = custom.items[C.id] || []).push(stripItem(I)); return; }
+        const p = {};
+        if (I.done) p.d = 1;
+        if (I.pinned) p.pin = 1;
+        if (I.fav) p.fav = 1;
+        if (I.myNote) p.note = I.myNote;
+        if (I.pips.some(Boolean)) p.p = I.pips.map(b => b ? 1 : 0);
+        const pk = {}; I.parts.forEach(pt => { if (pt.on) pk[partKey(pt.label)] = 1; });
+        if (Object.keys(pk).length) p.parts = pk;
+        if (Object.keys(p).length) items[I.id] = p; else delete items[I.id];
+      });
+    });
+  });
+  // keep the visitor's additions that live inside things they've hidden
+  Object.keys(U.custom.items || {}).forEach(k => { if (!seenCats.has(k) && !custom.items[k]) custom.items[k] = U.custom.items[k]; });
+  Object.keys(U.custom.cats || {}).forEach(k => { if (!seenMenus.has(k) && !custom.cats[k]) custom.cats[k] = U.custom.cats[k]; });
+  U.items = items; U.cats = cats; U.menus = menus; U.custom = custom;
+  U.order = { menus: state.menus.map(m => m.id), cats: Object.fromEntries(state.menus.map(m => [m.id, m.cats.map(c => c.id)])) };
+}
+
+let saveFail = false;
+function save() {
+  persist();
+  if (!storageOK) return;
+  try { localStorage.setItem(KEY, JSON.stringify(U)); saveFail = false; setPill('💾 saved in this browser'); }
+  catch (e) { if (!saveFail) toast("⚠️ couldn't save — browser storage may be full"); saveFail = true; setPill('⚠️ not saved'); }
+}
+function setPill(t) { const p = $('#savePill'); if (p) p.textContent = t; }
+function rebuild() { state = buildState(); }
+
+/* ---------- derived ---------- */
+function curMenu() { return state.menus.find(m => m.id === U.ui.menu) || state.menus[0]; }
+function isNeeded() { return U.ui.menu === 'needed'; }
+function curCat() {
+  const m = curMenu(); if (!m || !m.cats.length) return null;
+  let c = m.cats.find(x => x.id === U.ui.cat[m.id]);
+  if (!c) { c = m.cats[0]; U.ui.cat[m.id] = c.id; }
+  return c;
+}
+function units(c, it) {
+  if (it.parts.length) return [it.parts.filter(p => p.on).length, it.parts.length];
+  if (c.pipLabels.length) return [c.pipLabels.filter((_, i) => it.pips[i]).length, c.pipLabels.length];
+  return [it.done ? 1 : 0, 1];
+}
+const isDone = (c, it) => { const u = units(c, it); return u[0] === u[1]; };
+function setAll(c, it, val) {
+  if (it.parts.length) it.parts.forEach(p => { p.on = val; });
+  else if (c.pipLabels.length) it.pips = c.pipLabels.map(() => val);
+  else it.done = val;
+}
+function catStats(c) {
+  let n = 0, total = 0, full = 0;
+  c.items.forEach(it => { const u = units(c, it); n += u[0]; total += u[1]; if (u[0] === u[1]) full++; });
+  return { n, total, full, items: c.items.length };
+}
+function menuStats(m) { let n = 0, t = 0; m.cats.forEach(c => { const s = catStats(c); n += s.full; t += s.items; }); return { n, t }; }
+function allPinned() { const out = []; state.menus.forEach(m => m.cats.forEach(c => c.items.forEach(it => { if (it.pinned) out.push({ m, c, it }); }))); return out; }
+function locate(id) { for (const m of state.menus) for (const c of m.cats) { const it = c.items.find(x => x.id === id); if (it) return { m, c, it }; } return null; }
+function questDone(name) {
+  const k = name.toLowerCase();
+  for (const m of state.menus) for (const c of m.cats) for (const it of c.items) if (it.name.toLowerCase() === k) return isDone(c, it);
+  return null;
+}
+
+/* ---------- daily / weekly resets ---------- */
+function lastBoundary(c, now) {
+  const d = new Date(now); d.setHours(c.resetHour || 0, 0, 0, 0);
+  if (d.getTime() > now) d.setDate(d.getDate() - 1);
+  if (c.reset === 'weekly') { const want = c.resetDay == null ? 1 : c.resetDay; while (d.getDay() !== want) d.setDate(d.getDate() - 1); }
+  return d.getTime();
+}
+function nextBoundary(c, now) { const l = new Date(lastBoundary(c, now)); l.setDate(l.getDate() + (c.reset === 'weekly' ? 7 : 1)); return l.getTime(); }
+function checkResets() {
+  const now = Date.now(); let changed = false;
+  state.menus.forEach(m => m.cats.forEach(c => {
+    if (c.reset !== 'daily' && c.reset !== 'weekly') return;
+    if (!c.lastReset) { c.lastReset = now; changed = true; return; }
+    if (c.lastReset < lastBoundary(c, now)) { c.items.forEach(it => setAll(c, it, false)); c.lastReset = now; changed = true; }
+  }));
+  return changed;
+}
+function fmtLeft(ms) { const h = Math.floor(ms / 36e5), mn = Math.floor(ms % 36e5 / 6e4); if (h >= 48) return Math.floor(h / 24) + 'd ' + (h % 24) + 'h'; if (h >= 1) return h + 'h ' + mn + 'm'; return Math.max(mn, 1) + 'm'; }
+
+/* ---------- render ---------- */
+function render() { renderTabs(); renderChips(); renderCat(); renderBubble(); }
+
+function renderTabs() {
+  const pins = allPinned(), left = pins.filter(p => !isDone(p.c, p.it)).length;
+  const h = state.menus.map(m => {
+    const s = menuStats(m), col = MENU_COLORS[(m.color || 0) % MENU_COLORS.length];
+    return `<button class="tab ${!isNeeded() && m.id === curMenu().id ? 'on' : ''}" style="--tabc:${col[0]};--tabd:${col[1]}" data-act="menu" data-id="${esc(m.id)}"><span>${esc(m.icon)}</span>${esc(m.name)}<span class="cnt">${s.n}/${s.t}</span></button>`;
+  }).join('');
+  const tabs = $('#tabs');
+  tabs.innerHTML = `<button class="tab ${isNeeded() ? 'on' : ''}" style="--tabc:#ffb3c8;--tabd:#ef7f9f" data-act="menu" data-id="needed"><span>📌</span>Needed<span class="cnt">${left}</span></button>` + h + `<button class="tab add" data-act="addMenu">＋ new menu</button>`;
+  const on = tabs.querySelector('.tab.on'); // keep the active tab visible on phones
+  if (on && tabs.scrollWidth > tabs.clientWidth) tabs.scrollLeft = on.offsetLeft - tabs.clientWidth / 2 + on.offsetWidth / 2;
+}
+function renderChips() {
+  const el = $('#chips');
+  if (isNeeded()) { el.innerHTML = ''; el.style.display = 'none'; return; }
+  el.style.display = '';
+  const m = curMenu(), c = curCat();
+  el.innerHTML = m.cats.map(x => {
+    const s = catStats(x), all = s.items > 0 && s.full === s.items;
+    return `<button class="chip ${c && x.id === c.id ? 'on' : ''} ${all ? 'done-all' : ''}" data-act="cat" data-id="${esc(x.id)}"><span>${esc(x.icon)}</span>${esc(x.name)}<span class="mini">${all ? '✓ ' : ''}${s.full}/${s.items}</span></button>`;
+  }).join('') + `<button class="chip add" data-act="addCat">＋ add category</button>`;
+}
+
+const CHECK_SVG = `<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3.2 3L13 4.5" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+function itemCard(c, it, where) {
+  const d = isDone(c, it);
+  let tags = '';
+  if (it.parts.length) tags = `<div class="pips">${it.parts.map((p, i) => `<button class="pip part ${p.on ? 'on' : ''}" data-act="part" data-id="${esc(it.id)}" data-i="${i}" aria-pressed="${p.on}">${esc(p.label)}</button>`).join('')}</div>`;
+  else if (c.pipLabels.length) tags = `<div class="pips">${c.pipLabels.map((p, i) => `<button class="pip ${it.pips[i] ? 'on' : ''}" data-act="pip" data-id="${esc(it.id)}" data-i="${i}" aria-pressed="${!!it.pips[i]}">${esc(p)}</button>`).join('')}</div>`;
+  let status = '', locked = false, next = false;
+  if (!d && it.after) {
+    const dep = questDone(it.after);
+    if (dep === false) { locked = true; status = `<div class="qs lock">🔒 after “${esc(it.after)}”</div>`; }
+    else status = `<div class="qs open">✨ available</div>`;
+  }
+  if (!d && !locked && c.ordered && c.items.find(x => !isDone(c, x)) === it) next = true;
+  return `<div class="item ${d ? 'done' : ''} ${it.pinned ? 'pinned' : ''} ${locked ? 'locked' : ''} ${next ? 'next' : ''}">
+    ${next ? '<span class="next-badge">▶ next up</span>' : ''}
+    ${it.pinned ? '<span class="fav-badge">📌</span>' : it.fav ? '<span class="fav-badge">⭐</span>' : ''}
+    <button class="check" data-act="toggle" data-id="${esc(it.id)}" aria-label="${d ? 'Untick' : 'Tick'} ${esc(it.name)}">${CHECK_SVG}</button>
+    <div class="txt">${where ? `<div class="where">${where}</div>` : ''}<div class="nm">${esc(it.name)}${NEW.has(it.id) ? '<span class="new-pill">new!</span>' : ''}${!it.official ? '<span class="mine">✎ mine</span>' : ''}</div>${it.note ? `<div class="note">${esc(it.note)}</div>` : ''}${it.myNote ? `<div class="mynote">📝 ${esc(it.myNote)}</div>` : ''}${status}${tags}</div>
+    <div class="acts">
+      <button class="pin ${it.pinned ? 'on' : ''}" data-act="pin" data-id="${esc(it.id)}" title="${it.pinned ? 'Unpin' : 'Pin — I need this right now'}" aria-label="${it.pinned ? 'Unpin' : 'Pin'} ${esc(it.name)}">${it.pinned ? '📌' : '📍'}</button>
+      <button class="fav ${it.fav ? 'on' : ''}" data-act="fav" data-id="${esc(it.id)}" title="Favourite" aria-label="Favourite ${esc(it.name)}">${it.fav ? '⭐' : '☆'}</button>
+      <button data-act="editItem" data-id="${esc(it.id)}" title="Edit / notes" aria-label="Edit ${esc(it.name)}">✏️</button>
+    </div>
+  </div>`;
+}
+
+function renderNeeded() {
+  const v = $('#catView'), pins = allPinned(), hide = U.ui.hideDone;
+  const shown = pins.filter(p => !hide || !isDone(p.c, p.it));
+  const tally = new Map();
+  pins.forEach(({ it }) => {
+    it.parts.forEach(p => {
+      if (p.on) return;
+      const [n, q] = splitQty(p.label), k = n.toLowerCase();
+      const t = tally.get(k) || { n, q: 0, qtyKnown: /[×x]\s*\d+\s*$/i.test(p.label), for: [] };
+      t.q += q; t.for.push(it.name); tally.set(k, t);
+    });
+  });
+  const gather = [...tally.values()].sort((a, b) => a.n.localeCompare(b.n));
+  const s = pins.reduce((a, p) => { const u = units(p.c, p.it); a.n += u[0]; a.t += u[1]; return a; }, { n: 0, t: 0 });
+  const pct = s.t ? Math.round(s.n / s.t * 100) : 0;
+  const groups = new Map();
+  shown.forEach(p => { if (!groups.has(p.c.id)) groups.set(p.c.id, { m: p.m, c: p.c, items: [] }); groups.get(p.c.id).items.push(p.it); });
+  v.innerHTML = `
+    <div class="cat-head">
+      <h2>📌 Currently needed</h2>
+      <div class="progress"><div class="bar"><i style="width:${pct}%"></i></div><span class="pct">${s.n}/${s.t} · ${pct}%</span></div>
+      ${pins.some(p => isDone(p.c, p.it)) ? `<button class="small-btn" data-act="unpinDone">✓ unpin finished</button>` : ''}
+    </div>
+    <div class="toolbar"><label class="toggle"><input type="checkbox" id="hideDone" ${hide ? 'checked' : ''}> hide done</label></div>
+    ${pins.length === 0 ? `<div class="empty"><div class="big">📍</div>Nothing pinned yet!<br>Tap the <b>📍</b> on any quest, bundle or recipe to add it here — it's your “working on it right now” list.</div>` : `
+      ${gather.length ? `<div class="gather"><div class="gather-h">🧺 Stuff to gather <span>${gather.length} thing${gather.length === 1 ? '' : 's'}</span></div>
+        <div class="gather-list">${gather.map(g => `<span class="g" title="for: ${esc(g.for.join(', '))}">${esc(g.n)}${g.qtyKnown ? ` <b>×${g.q}</b>` : (g.for.length > 1 ? ` <b>(${g.for.length} bundles)</b>` : '')}</span>`).join('')}</div>
+        <div class="hint">Unticked items from your pinned entries, added up. Tick them off on the cards below as you hand them in.</div></div>` : ''}
+      ${[...groups.values()].map(g => `<div class="grp-h">${esc(g.c.icon)} ${esc(g.c.name)} <span>· ${esc(g.m.name)}</span></div><div class="list">${g.items.map(it => itemCard(g.c, it)).join('')}</div>`).join('') || `<div class="empty"><div class="big">🎉</div>Everything you pinned is done!</div>`}
+    `}`;
+}
+
+function renderCat() {
+  if (isNeeded()) return renderNeeded();
+  const c = curCat(), v = $('#catView');
+  if (!c) { v.innerHTML = `<div class="empty"><div class="big">🌤️</div>This menu has no categories yet — add one above!</div>`; return; }
+  const s = catStats(c), pct = s.total ? Math.round(s.n / s.total * 100) : 0;
+  const q = (U.ui.q || '').trim().toLowerCase();
+  let items = c.items.slice();
+  if (q) items = items.filter(it => (it.name + ' ' + it.note + ' ' + it.myNote + ' ' + it.parts.map(p => p.label).join(' ')).toLowerCase().includes(q));
+  if (U.ui.hideDone) items = items.filter(it => !isDone(c, it));
+  if (U.ui.pinOnly) items = items.filter(it => it.pinned);
+  const sort = U.ui.sort;
+  if (sort === 'az') items.sort((a, b) => a.name.localeCompare(b.name));
+  else if (sort === 'todo') items.sort((a, b) => isDone(c, a) - isDone(c, b));
+  else if (sort === 'fav') items.sort((a, b) => b.fav - a.fav);
+  else if (sort === 'pin') items.sort((a, b) => b.pinned - a.pinned);
+  const emptyMsg = c.items.length === 0
+    ? `<div class="empty"><div class="big">🌱</div>No entries yet! Add them one at a time above, or paste a whole list with <b>⚙ Edit → Paste a list</b>.</div>`
+    : U.ui.pinOnly && !q ? `<div class="empty"><div class="big">📍</div>Nothing pinned in ${esc(c.name)} yet — tap 📍 on anything you're working towards.</div>`
+    : `<div class="empty"><div class="big">${U.ui.hideDone ? '🎉' : '🔍'}</div>${U.ui.hideDone && !q ? 'Everything here is done — yay!' : 'Nothing matches that search.'}</div>`;
+  v.innerHTML = `
+    <div class="cat-head">
+      <h2>${esc(c.icon)} ${esc(c.name)}${c.reset ? `<span class="reset-pill" title="Ticks clear automatically">🔁 resets in ${fmtLeft(nextBoundary(c, Date.now()) - Date.now())}</span>` : ''}</h2>
+      <div class="progress"><div class="bar"><i style="width:${pct}%"></i></div><span class="pct">${s.n}/${s.total} · ${pct}%</span></div>
+      <button class="small-btn" data-act="editCat">⚙ Edit</button>
+    </div>
+    <div class="toolbar">
+      <label class="search">🔍<input id="q" placeholder="search ${esc(c.name.toLowerCase())}…" value="${esc(U.ui.q || '')}" aria-label="Search"></label>
+      <label class="toggle"><input type="checkbox" id="hideDone" ${U.ui.hideDone ? 'checked' : ''}> hide done</label>
+      <label class="toggle"><input type="checkbox" id="pinOnly" ${U.ui.pinOnly ? 'checked' : ''}> 📌 only</label>
+      <select class="sort" id="sort" aria-label="Sort">
+        <option value="order" ${sort === 'order' ? 'selected' : ''}>list order</option>
+        <option value="az" ${sort === 'az' ? 'selected' : ''}>A → Z</option>
+        <option value="todo" ${sort === 'todo' ? 'selected' : ''}>to-do first</option>
+        <option value="fav" ${sort === 'fav' ? 'selected' : ''}>⭐ first</option>
+        <option value="pin" ${sort === 'pin' ? 'selected' : ''}>📌 first</option>
+      </select>
+    </div>
+    <form class="add-row" id="addForm"><input id="newItem" placeholder="add your own to ${esc(c.name)}…  (tip: “Name - note”)" autocomplete="off" aria-label="Add an entry"><button type="submit">add</button></form>
+    ${items.length ? `<div class="list">${items.map(it => itemCard(c, it)).join('')}</div>` : emptyMsg}`;
+}
+
+function renderBubble() {
+  const b = $('#bubble');
+  if (isNeeded()) {
+    const pins = allPinned(), left = pins.filter(p => !isDone(p.c, p.it)).length;
+    b.textContent = !pins.length ? "pin what you're working on & i'll keep it here 📌" : left ? `${left} thing${left === 1 ? '' : 's'} on the go — you got this 🍊` : 'every pinned thing is done!! 🎉';
+    return;
+  }
+  const c = curCat();
+  if (!c || !c.items.length) { b.textContent = 'a fresh page! what shall we track? 🌸'; return; }
+  const s = catStats(c), p = s.total ? s.n / s.total : 0;
+  const lines = p >= 1 ? [`${c.name} complete!! you're amazing 🎉`, 'all done! time for a nap in the sun ☀️']
+    : p >= .75 ? [`sooo close on ${c.name}! ✨`, 'almost there, keep going 💪']
+    : p >= .4 ? ['over halfway-ish! 🍊', 'nice progress, friend 🌿']
+    : p > 0 ? [`good start on ${c.name}! 🌱`, 'one tick at a time 🐾']
+    : [`let's start ${c.name}! ☁️`, 'a brand-new adventure awaits ☁️'];
+  b.textContent = lines[(s.n + c.name.length) % lines.length];
+}
+
+function renderDataInfo() {
+  const src = (DATA.sources || []).map(s => `<a href="${esc(s.url)}" target="_blank" rel="noopener noreferrer">${esc(s.name)}</a>`).join(' · ');
+  $('#dataInfo').innerHTML = `<span>📦 lists v${esc(DATA.version)}${DATA.gameVersion ? ` · ${esc(DATA.gameVersion)}` : ''}</span>${src ? `<span>sources: ${src}</span>` : ''}`;
+}
+
+/* ---------- interactions ---------- */
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-act]'); if (!t || !state) return;
+  const act = t.dataset.act;
+  const hit = t.dataset.id && act !== 'menu' && act !== 'cat' ? locate(t.dataset.id) : null;
+  if (act === 'menu') { U.ui.menu = t.dataset.id; U.ui.q = ''; save(); render(); }
+  else if (act === 'cat') { U.ui.cat[curMenu().id] = t.dataset.id; U.ui.q = ''; save(); render(); }
+  else if (act === 'toggle' && hit) { const before = isDone(hit.c, hit.it); setAll(hit.c, hit.it, !before); afterChange(hit.c, before, isDone(hit.c, hit.it), t); }
+  else if (act === 'pip' && hit) { const before = isDone(hit.c, hit.it), i = +t.dataset.i; hit.it.pips[i] = !hit.it.pips[i]; afterChange(hit.c, before, isDone(hit.c, hit.it), t); }
+  else if (act === 'part' && hit) { const before = isDone(hit.c, hit.it), p = hit.it.parts[+t.dataset.i]; p.on = !p.on; afterChange(hit.c, before, isDone(hit.c, hit.it), t); }
+  else if (act === 'fav' && hit) { hit.it.fav = !hit.it.fav; save(); renderCat(); }
+  else if (act === 'pin' && hit) { hit.it.pinned = !hit.it.pinned; save(); render(); toast(hit.it.pinned ? '📌 added to Needed' : 'unpinned'); }
+  else if (act === 'unpinDone') { allPinned().forEach(p => { if (isDone(p.c, p.it)) p.it.pinned = false; }); save(); render(); toast('tidied up ✨'); }
+  else if (act === 'editItem' && hit) openItemModal(hit);
+  else if (act === 'editCat') openCatModal(curCat());
+  else if (act === 'addCat') openCatModal(null);
+  else if (act === 'addMenu') openMenuModal(null);
+});
+function afterChange(c, before, after, el) {
+  const all = c.items.length && catStats(c).full === c.items.length;
+  save(); render();
+  if (!before && after) {
+    const r = el.getBoundingClientRect(); burst(r.left + r.width / 2, r.top + r.height / 2, 7);
+    if (all) setTimeout(() => { burst(innerWidth / 2, innerHeight / 3, 26); toast(`🎉 ${c.name} complete!`); }, 150);
+  }
+}
+document.addEventListener('input', e => {
+  if (e.target.id === 'q') { U.ui.q = e.target.value; const pos = e.target.selectionStart; renderCat(); const q = $('#q'); q.focus(); q.setSelectionRange(pos, pos); }
+});
+document.addEventListener('change', e => {
+  if (!state) return;
+  if (e.target.id === 'hideDone') { U.ui.hideDone = e.target.checked; save(); renderCat(); }
+  if (e.target.id === 'pinOnly') { U.ui.pinOnly = e.target.checked; save(); renderCat(); }
+  if (e.target.id === 'sort') { U.ui.sort = e.target.value; save(); renderCat(); }
+});
+document.addEventListener('submit', e => {
+  if (e.target.id !== 'addForm') return;
+  e.preventDefault();
+  const v = $('#newItem').value.trim(); if (!v) return;
+  curCat().items.push(parseLine(v)); save(); render(); $('#newItem').focus(); toast('added ✨');
+});
+function parseLine(line) { const m = line.split(/\s+[-–—|]\s+/); return customItem({ name: m[0].trim(), note: m.slice(1).join(' - ').trim() }); }
+$('#menuSettingsBtn').onclick = () => { if (!state) return; if (isNeeded()) { toast('pick a menu tab to edit it 🙂'); return; } openMenuModal(curMenu()); };
+$('#backupBtn').onclick = () => { if (state) openBackupModal(); };
+
+/* ---------- modals ---------- */
+const scrim = $('#scrim'), modal = $('#modal');
+let lastFocus = null;
+function openModal(html, mount) {
+  lastFocus = document.activeElement;
+  modal.innerHTML = html; scrim.classList.add('open'); mount && mount(modal);
+  const f = modal.querySelector('input:not([type=checkbox]):not([type=file]),textarea'); setTimeout(() => (f || modal.querySelector('button')).focus(), 60);
+}
+function closeModal() { scrim.classList.remove('open'); modal.innerHTML = ''; if (lastFocus) lastFocus.focus(); }
+scrim.addEventListener('mousedown', e => { if (e.target === scrim) closeModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && scrim.classList.contains('open')) closeModal(); });
+function askConfirm(title, msg, yesLabel, onYes) {
+  openModal(`<h3>${esc(title)}</h3><p style="font-weight:600;color:var(--ink-soft);margin:0">${msg}</p>
+    <div class="m-actions"><button class="btn ghost" data-m="no">never mind</button><button class="btn danger" data-m="yes">${esc(yesLabel)}</button></div>`, m => {
+    m.querySelector('[data-m=no]').onclick = closeModal;
+    m.querySelector('[data-m=yes]').onclick = () => { closeModal(); onYes(); };
+  });
+}
+const emojiPicker = sel => `<div class="emoji-row">${EMOJIS.map(e => `<button type="button" class="${e === sel ? 'on' : ''}" data-emoji="${e}">${e}</button>`).join('')}</div>`;
+function wireEmoji(m, cb) { m.querySelectorAll('[data-emoji]').forEach(b => { b.onclick = () => { m.querySelectorAll('[data-emoji]').forEach(x => x.classList.remove('on')); b.classList.add('on'); cb(b.dataset.emoji); }; }); }
+
+function openItemModal({ m: menu, c, it }) {
+  if (it.official) {
+    openModal(`<h3>📝 Notes</h3>
+      <div class="ro-name">${esc(it.name)}</div>
+      <div class="ro-hint">${it.note ? esc(it.note) + '<br>' : ''}This entry comes from the shared list, so it updates by itself — you can add your own note.</div>
+      <div class="field"><label>My note</label><input id="iMy" value="${esc(it.myNote)}" placeholder="e.g. need to grow more tomatoes first"></div>
+      <label class="toggle" style="height:44px"><input type="checkbox" id="iPin" ${it.pinned ? 'checked' : ''}> 📌 I need this right now</label>
+      <div class="m-actions"><button class="btn" data-m="hide">🙈 hide from my list</button><span style="flex:1"></span><button class="btn ghost" data-m="x">cancel</button><button class="btn primary" data-m="ok">save</button></div>`, m => {
+      m.querySelector('[data-m=x]').onclick = closeModal;
+      m.querySelector('[data-m=hide]').onclick = () => { persist(); U.hidden.items[it.id] = 1; rebuild(); save(); closeModal(); render(); toast('hidden — bring it back from 🧺'); };
+      const ok = () => { it.myNote = m.querySelector('#iMy').value.trim(); it.pinned = m.querySelector('#iPin').checked; save(); closeModal(); render(); };
+      m.querySelector('[data-m=ok]').onclick = ok;
+      m.querySelector('#iMy').onkeydown = e => { if (e.key === 'Enter') ok(); };
+    });
+    return;
+  }
+  const others = menu.cats.filter(x => x.id !== c.id);
+  const hasAfter = it.after || menu.cats.some(x => x.items.some(i => i.after));
+  openModal(`<h3>✏️ Edit entry</h3>
+    <div class="field"><label>Name</label><input id="iName" value="${esc(it.name)}"></div>
+    <div class="field"><label>Note</label><input id="iNote" value="${esc(it.note)}" placeholder="where to find it, what it unlocks…"></div>
+    ${hasAfter ? `<div class="field"><label>Unlocks after (quest name)</label><input id="iAfter" value="${esc(it.after)}" placeholder="leave blank if always available"></div>` : ''}
+    <div class="field"><label>Needs (optional)</label><textarea id="iParts" placeholder="One per line, e.g.\nTomato ×2\nPlank">${esc(it.parts.map(p => p.label).join('\n'))}</textarea>
+      <div class="hint">Each line becomes a tag you can tick. Add “×3” for amounts and they'll add up in 📌 Needed.</div></div>
+    <label class="toggle" style="height:44px;margin-bottom:6px"><input type="checkbox" id="iPin" ${it.pinned ? 'checked' : ''}> 📌 I need this right now</label>
+    ${others.length ? `<div class="field"><label>Move to</label><select id="iMove" class="sort" style="width:100%"><option value="">— stay in ${esc(c.name)} —</option>${others.map(o => `<option value="${esc(o.id)}">${esc(o.icon)} ${esc(o.name)}</option>`).join('')}</select></div>` : ''}
+    <div class="m-actions"><button class="btn danger" data-m="del">🗑 delete</button><span style="flex:1"></span><button class="btn ghost" data-m="x">cancel</button><button class="btn primary" data-m="ok">save</button></div>`, m => {
+    m.querySelector('[data-m=x]').onclick = closeModal;
+    m.querySelector('[data-m=del]').onclick = () => { c.items = c.items.filter(x => x !== it); save(); closeModal(); render(); toast('deleted'); };
+    const ok = () => {
+      const n = m.querySelector('#iName').value.trim(); if (!n) return;
+      it.name = n; it.note = m.querySelector('#iNote').value.trim(); it.pinned = m.querySelector('#iPin').checked;
+      const af = m.querySelector('#iAfter'); if (af) it.after = af.value.trim();
+      const wasDone = isDone(c, it), old = new Map(it.parts.map(p => [p.label.toLowerCase(), p.on]));
+      it.parts = m.querySelector('#iParts').value.split('\n').map(s => s.trim()).filter(Boolean).map(l => ({ label: l, on: old.has(l.toLowerCase()) ? old.get(l.toLowerCase()) : wasDone }));
+      const mv = m.querySelector('#iMove');
+      if (mv && mv.value) { const dest = menu.cats.find(x => x.id === mv.value); c.items = c.items.filter(x => x !== it); dest.items.push(it); toast(`moved to ${dest.name}`); }
+      save(); closeModal(); render();
+    };
+    m.querySelector('[data-m=ok]').onclick = ok;
+    m.querySelectorAll('input:not([type=checkbox])').forEach(i => { i.onkeydown = e => { if (e.key === 'Enter') ok(); }; });
+  });
+}
+
+function resetFields(c) {
+  return `<div class="field"><label>Auto-reset ticks</label>
+    <div class="row">
+      <select id="cReset" class="sort"><option value="">never</option><option value="daily" ${c && c.reset === 'daily' ? 'selected' : ''}>every day</option><option value="weekly" ${c && c.reset === 'weekly' ? 'selected' : ''}>every week</option></select>
+      <select id="cDay" class="sort">${WEEKDAYS.map((d, i) => `<option value="${i}" ${(c && c.resetDay != null ? c.resetDay : 1) === i ? 'selected' : ''}>on ${d}</option>`).join('')}</select>
+      <select id="cHour" class="sort">${Array.from({ length: 24 }, (_, h) => `<option value="${h}" ${((c && c.resetHour) || 0) === h ? 'selected' : ''}>at ${((h + 11) % 12) + 1}${h < 12 ? 'am' : 'pm'}</option>`).join('')}</select>
+    </div><div class="hint">Your local time — match it to the game's server reset.</div></div>`;
+}
+function openCatModal(c) {
+  const isNew = !c, official = c && c.official; let icon = c ? c.icon : '⭐';
+  const menu = curMenu();
+  openModal(`<h3>${isNew ? '🌸 New category' : '⚙ ' + esc(c.name)}</h3>
+    <div class="field"><label>Name</label><input id="cName" value="${esc(c ? c.name : '')}" placeholder="e.g. Baking, Furniture, Bugs…"></div>
+    <div class="field"><label>Icon</label>${emojiPicker(icon)}</div>
+    ${resetFields(c)}
+    ${official ? '' : `<div class="field"><label>Condition / tier tags (optional)</label><input id="cPips" value="${esc(c ? c.pipLabels.join(', ') : '')}" placeholder="e.g. Battered, Used, Spotless">
+      <div class="hint">Comma-separated. Each entry gets little tags to tick. Leave blank for a simple checkbox.</div></div>`}
+    <div class="field"><label>Paste a list${isNew ? '' : ' (adds your own entries)'}</label><textarea id="cBulk" placeholder="One per line. Add a note after a dash:\nMiso Soup - needs soybeans\nCroissant"></textarea></div>
+    ${isNew ? '' : `<div class="m-sec"><div class="row">
+      <button class="btn" data-m="uncheck">↺ untick everything</button>
+      <button class="btn" data-m="left">◀ move left</button>
+      <button class="btn" data-m="right">move right ▶</button>
+      ${official ? '<button class="btn" data-m="hide">🙈 hide category</button>' : '<button class="btn danger" data-m="del">🗑 delete category</button>'}
+    </div>${official ? '<div class="hint" style="margin-top:8px">This is a shared list — it updates by itself. Renaming only changes it for you.</div>' : ''}</div>`}
+    <div class="m-actions"><button class="btn ghost" data-m="x">cancel</button><button class="btn primary" data-m="ok">${isNew ? 'create' : 'save'}</button></div>`, m => {
+    wireEmoji(m, e => { icon = e; });
+    const sync = () => { const v = m.querySelector('#cReset').value; m.querySelector('#cDay').style.display = v === 'weekly' ? '' : 'none'; m.querySelector('#cHour').style.display = v ? '' : 'none'; };
+    m.querySelector('#cReset').onchange = sync; sync();
+    m.querySelector('[data-m=x]').onclick = closeModal;
+    m.querySelector('[data-m=ok]').onclick = () => {
+      const name = m.querySelector('#cName').value.trim(); if (!name) { m.querySelector('#cName').focus(); return; }
+      const pipsEl = m.querySelector('#cPips');
+      const pips = pipsEl ? pipsEl.value.split(',').map(s => s.trim()).filter(Boolean) : null;
+      const bulk = m.querySelector('#cBulk').value.split('\n').map(s => s.trim()).filter(Boolean).map(parseLine);
+      const rs = m.querySelector('#cReset').value, rh = +m.querySelector('#cHour').value, rd = +m.querySelector('#cDay').value;
+      let target = c;
+      if (isNew) { target = customCat({ name, icon, pipLabels: pips || [] }); menu.cats.push(target); U.ui.cat[menu.id] = target.id; }
+      else {
+        target.name = name; target.icon = icon;
+        if (pips && pips.join('|') !== target.pipLabels.join('|')) {
+          target.items.forEach(it => {
+            if (it.parts.length) return;
+            if (!target.pipLabels.length) it.pips = pips.map(() => it.done);
+            else if (!pips.length) it.done = target.pipLabels.every((_, i) => it.pips[i]);
+            else it.pips = pips.map((_, i) => !!it.pips[i]);
+          });
+          target.pipLabels = pips;
+        }
+      }
+      if (target.reset !== rs || (rs && (target.resetHour !== rh || target.resetDay !== rd))) target.lastReset = Date.now();
+      target.reset = rs; target.resetHour = rh; target.resetDay = rd;
+      target.items.push(...bulk);
+      save(); closeModal(); render();
+      toast(bulk.length ? `added ${bulk.length} entr${bulk.length === 1 ? 'y' : 'ies'} ✨` : (isNew ? 'category created 🌸' : 'saved'));
+    };
+    if (!isNew) {
+      const cats = menu.cats, idx = () => cats.indexOf(c);
+      const move = d => { const i = idx(), j = i + d; if (j < 0 || j >= cats.length) return; cats.splice(i, 1); cats.splice(j, 0, c); save(); render(); };
+      m.querySelector('[data-m=left]').onclick = () => move(-1);
+      m.querySelector('[data-m=right]').onclick = () => move(1);
+      m.querySelector('[data-m=uncheck]').onclick = () => askConfirm('Untick everything?', `All ticks in <b>${esc(c.name)}</b> will be cleared (entries stay).`, 'untick all', () => { c.items.forEach(it => setAll(c, it, false)); save(); render(); toast('fresh start ☀️'); });
+      const hide = m.querySelector('[data-m=hide]');
+      if (hide) hide.onclick = () => askConfirm('Hide category?', `<b>${esc(c.name)}</b> will be hidden for you. Your ticks are kept — bring it back anytime from 🧺.`, 'hide it', () => { persist(); U.hidden.cats[c.id] = 1; rebuild(); save(); render(); });
+      const del = m.querySelector('[data-m=del]');
+      if (del) del.onclick = () => askConfirm('Delete category?', `<b>${esc(c.name)}</b> and its ${c.items.length} entries will be gone for good.`, 'delete it', () => { menu.cats = cats.filter(x => x !== c); save(); render(); toast('category deleted'); });
+    }
+  });
+}
+
+function openMenuModal(menu) {
+  const isNew = !menu, official = menu && menu.official;
+  let icon = menu ? menu.icon : '⭐', color = menu ? (menu.color || 0) : state.menus.length % MENU_COLORS.length;
+  openModal(`<h3>${isNew ? '🗂 New menu' : '⚙ Edit “' + esc(menu.name) + '” menu'}</h3>
+    <div class="field"><label>Menu name</label><input id="mName" value="${esc(menu ? menu.name : '')}" placeholder="e.g. Pets, Outfits, Goals…"></div>
+    <div class="field"><label>Icon</label>${emojiPicker(icon)}</div>
+    <div class="field"><label>Colour</label><div class="emoji-row">${MENU_COLORS.map((c, i) => `<button type="button" class="${i === color ? 'on' : ''}" data-color="${i}" style="background:${c[0]}" aria-label="Colour ${i + 1}"></button>`).join('')}</div></div>
+    ${isNew ? '' : `<div class="m-sec"><div class="row">
+      <button class="btn" data-m="left">◀ move left</button><button class="btn" data-m="right">move right ▶</button>
+      ${official ? '<button class="btn" data-m="hide">🙈 hide menu</button>' : '<button class="btn danger" data-m="del">🗑 delete menu</button>'}</div></div>`}
+    <div class="m-actions"><button class="btn ghost" data-m="x">cancel</button><button class="btn primary" data-m="ok">${isNew ? 'create' : 'save'}</button></div>`, m => {
+    wireEmoji(m, e => { icon = e; });
+    m.querySelectorAll('[data-color]').forEach(b => { b.onclick = () => { m.querySelectorAll('[data-color]').forEach(x => x.classList.remove('on')); b.classList.add('on'); color = +b.dataset.color; }; });
+    m.querySelector('[data-m=x]').onclick = closeModal;
+    m.querySelector('[data-m=ok]').onclick = () => {
+      const name = m.querySelector('#mName').value.trim(); if (!name) return;
+      if (isNew) { const nm = customMenu({ name, icon, color, cats: [{ name: 'General', icon: '⭐' }] }); state.menus.push(nm); U.ui.menu = nm.id; }
+      else { menu.name = name; menu.icon = icon; menu.color = color; }
+      save(); closeModal(); render();
+    };
+    if (!isNew) {
+      const move = d => { const i = state.menus.indexOf(menu), j = i + d; if (j < 0 || j >= state.menus.length) return; state.menus.splice(i, 1); state.menus.splice(j, 0, menu); save(); render(); };
+      m.querySelector('[data-m=left]').onclick = () => move(-1);
+      m.querySelector('[data-m=right]').onclick = () => move(1);
+      const hide = m.querySelector('[data-m=hide]');
+      if (hide) hide.onclick = () => askConfirm('Hide menu?', `<b>${esc(menu.name)}</b> will be hidden for you. Ticks are kept — bring it back from 🧺.`, 'hide it', () => { persist(); U.hidden.menus[menu.id] = 1; U.ui.menu = null; rebuild(); save(); render(); });
+      const del = m.querySelector('[data-m=del]');
+      if (del) del.onclick = () => askConfirm('Delete menu?', `<b>${esc(menu.name)}</b> and everything in it will be removed.`, 'delete it', () => { state.menus = state.menus.filter(x => x !== menu); U.ui.menu = null; save(); render(); });
+    }
+  });
+}
+
+/* ---------- backup / restore ---------- */
+function backupPayload() { persist(); return JSON.stringify({ kind: 'satele-logbook', game: GAME, savedAt: new Date().toISOString(), data: U }); }
+function applyBackup(text) {
+  let obj; try { obj = JSON.parse(text); } catch (e) { return "hmm, that doesn't look like a backup 🥲"; }
+  if (obj && obj.kind === 'satele-logbook') {
+    if (obj.game && obj.game !== GAME) return `that backup is for ${obj.game}, not ${GAME} 🙃`;
+    const known = U.known; U = normalizeUser(obj.data); if (!U.known.length) U.known = known;
+    rebuild(); checkResets(); save(); render(); return null;
+  }
+  if (obj && Array.isArray(obj.menus)) { const n = importLegacy(obj); save(); render(); toast(`imported ${n} entries from your old logbook 🌈`); return null; }
+  return "hmm, that doesn't look like a backup 🥲";
+}
+// Old single-page Loftia Logbook backups: match by category + entry name.
+function importLegacy(old) {
+  const norm = s => String(s || '').trim().toLowerCase();
+  let n = 0;
+  old.menus.forEach(om => (om.cats || []).forEach(oc => {
+    let target = null;
+    for (const m of state.menus) { const c = m.cats.find(x => norm(x.name) === norm(oc.name)); if (c && (!target || norm(m.name) === norm(om.name))) target = c; }
+    (oc.items || []).forEach(oi => {
+      const parts = (oi.parts || []).filter(p => p.on).map(p => partKey(p.label));
+      const touched = oi.done || oi.pinned || oi.fav || parts.length || (oi.pips || []).some(Boolean);
+      const it = target && target.items.find(x => norm(x.name) === norm(oi.name));
+      if (it) {
+        if (oi.done && !it.parts.length && !target.pipLabels.length) it.done = true;
+        if (oi.pinned) it.pinned = true;
+        if (oi.fav) it.fav = true;
+        it.parts.forEach(p => { if (parts.includes(partKey(p.label))) p.on = true; });
+        if (target.pipLabels.length && oi.pips) it.pips = target.pipLabels.map((_, i) => !!oi.pips[i] || !!oi.done);
+        if (it.parts.length && oi.done && !parts.length) it.parts.forEach(p => { p.on = true; });
+        if (touched) n++;
+      } else if (target) {
+        target.items.push(customItem({ name: oi.name, note: oi.note, after: oi.after, parts: oi.parts, pips: oi.pips, done: oi.done, pinned: oi.pinned, fav: oi.fav })); n++;
+      }
+    });
+  }));
+  return n;
+}
+function openBackupModal() {
+  const hiddenCount = Object.keys(U.hidden.items).length + Object.keys(U.hidden.cats).length + Object.keys(U.hidden.menus).length;
+  openModal(`<h3>🧺 Backup, restore &amp; settings</h3>
+    <p class="hint" style="margin:-6px 0 12px">Your progress is saved only in this browser. Download a backup to keep it safe or move it to another device.</p>
+    <div class="row"><button class="btn primary" data-m="dl">⬇ download backup</button><button class="btn" data-m="copy">📋 copy backup</button></div>
+    <div class="m-sec field"><label>Restore</label>
+      <div class="row"><label class="btn" style="cursor:pointer">📂 choose a backup file<input type="file" id="bFile" accept=".json,application/json" class="sr-only"></label></div>
+      <textarea id="bIn" placeholder="…or paste a backup here (old Loftia Logbook backups work too!)" style="margin-top:8px"></textarea>
+      <div class="row" style="margin-top:8px"><button class="btn" data-m="load">⤴ restore pasted backup</button></div></div>
+    <div class="m-sec row">
+      ${hiddenCount ? `<button class="btn" data-m="unhide">👀 show ${hiddenCount} hidden thing${hiddenCount === 1 ? '' : 's'}</button>` : ''}
+      <button class="btn danger" data-m="reset">reset all my progress</button>
+    </div>
+    <div class="m-actions"><button class="btn ghost" data-m="x">close</button></div>`, m => {
+    m.querySelector('[data-m=x]').onclick = closeModal;
+    m.querySelector('[data-m=dl]').onclick = () => {
+      const blob = new Blob([backupPayload()], { type: 'application/json' });
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+      a.download = `${GAME}-logbook-backup-${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+      toast('backup downloaded 💾');
+    };
+    m.querySelector('[data-m=copy]').onclick = async () => {
+      try { await navigator.clipboard.writeText(backupPayload()); toast('copied! 📋'); }
+      catch (e) { const ta = m.querySelector('#bIn'); ta.value = backupPayload(); ta.focus(); ta.select(); toast('selected — press Ctrl/Cmd + C'); }
+    };
+    m.querySelector('#bFile').onchange = e => {
+      const f = e.target.files[0]; if (!f) return;
+      if (f.size > 5e6) { toast('that file is too big to be a backup 🤔'); return; }
+      f.text().then(t => { const err = applyBackup(t); if (err) toast(err); else { closeModal(); toast('restored 🌈'); } });
+    };
+    m.querySelector('[data-m=load]').onclick = () => { const err = applyBackup(m.querySelector('#bIn').value); if (err) toast(err); else { closeModal(); toast('restored 🌈'); } };
+    const un = m.querySelector('[data-m=unhide]');
+    if (un) un.onclick = () => { persist(); U.hidden = freshUser().hidden; rebuild(); save(); closeModal(); render(); toast('everything is back 👀'); };
+    m.querySelector('[data-m=reset]').onclick = () => askConfirm('Reset everything?', 'All your ticks, pins, notes and your own entries will be cleared. (Tip: download a backup first!)', 'reset', () => {
+      const known = U.known; U = freshUser(); U.known = known; U.dataVersion = DATA.version; rebuild(); checkResets(); save(); render(); toast('fresh logbook 📒');
+    });
+  });
+}
+
+/* ---------- cute bits ---------- */
+let toastT;
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 2200); }
+function burst(x, y, n) {
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const bits = ['✨', '💖', '⭐', '🌸', '💫', '🍊'];
+  for (let i = 0; i < n; i++) {
+    const s = document.createElement('span'); s.className = 'confetti'; s.textContent = bits[i % bits.length];
+    const a = Math.random() * Math.PI * 2, d = 30 + Math.random() * (n > 10 ? 160 : 50);
+    s.style.left = x + 'px'; s.style.top = y + 'px';
+    s.style.setProperty('--dx', Math.cos(a) * d + 'px'); s.style.setProperty('--dy', (Math.sin(a) * d - 20) + 'px'); s.style.setProperty('--r', (Math.random() * 240 - 120) + 'deg');
+    document.body.appendChild(s); setTimeout(() => s.remove(), 950);
+  }
+}
+
+/* ---------- boot ---------- */
+function showWarn(html) { $('#warn').innerHTML = `<div class="warn-bar">${html}</div>`; }
+async function boot() {
+  if (!storageOK) showWarn('⚠️ Your browser is blocking storage (private window?) — ticks won\'t be kept after you close this tab. Use 🧺 to download a backup.');
+  try {
+    const r = await fetch(`/data/${encodeURIComponent(GAME)}.json`, { cache: 'no-cache' });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    DATA = await r.json();
+  } catch (e) {
+    $('#catView').innerHTML = `<div class="empty"><div class="big">🌧️</div>Couldn't load the ${esc(GAME)} lists. Check your connection and refresh.</div>`;
+    $('#bubble').textContent = 'uh oh, the clouds got in the way ☁️';
+    return;
+  }
+  indexData();
+  if (DATA.name) { $('#gameTitle').textContent = `${DATA.name} Logbook`; }
+
+  // what's new since last visit?
+  const allIds = Object.keys(IDX.items);
+  if (U.known.length) { const k = new Set(U.known); allIds.forEach(id => { if (!k.has(id)) NEW.add(id); }); }
+  const updated = U.dataVersion && U.dataVersion !== DATA.version;
+  U.known = allIds; U.dataVersion = DATA.version;
+
+  rebuild(); checkResets(); save();
+  render(); renderDataInfo();
+  if (NEW.size) setTimeout(() => toast(`✨ ${NEW.size} new entr${NEW.size === 1 ? 'y' : 'ies'} added since your last visit!`), 500);
+  else if (updated) setTimeout(() => toast('📦 lists updated — your progress is safe!'), 500);
+
+  // other tabs of this site
+  window.addEventListener('storage', e => {
+    if (e.key !== KEY || !e.newValue) return;
+    try { U = normalizeUser(JSON.parse(e.newValue)); rebuild(); render(); } catch (err) { /* ignore */ }
+  });
+  // dailies + countdown
+  setInterval(() => {
+    if (checkResets()) { save(); render(); toast('🔁 dailies refreshed — new day!'); return; }
+    const c = !isNeeded() && curCat(), p = document.querySelector('.reset-pill');
+    if (c && c.reset && p) p.textContent = '🔁 resets in ' + fmtLeft(nextBoundary(c, Date.now()) - Date.now());
+  }, 60000);
+}
+boot();
+})();

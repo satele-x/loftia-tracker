@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>satele logbooks — cozy trackers for cozy games</title>
+<meta name="description" content="Cute, free progress trackers for cozy MMOs. Tick off quests, recipes, research bundles and collections — saved right in your browser.">
+<meta name="theme-color" content="#fde7f3">
+<meta property="og:title" content="satele logbooks">
+<meta property="og:description" content="Cute, free progress trackers for cozy MMOs.">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/css/base.css">
+<link rel="stylesheet" href="/assets/css/home.css">
+</head>
+<body>
+<div class="sky" id="sky" aria-hidden="true"></div>
+
+<header class="site-head">
+  <div class="in">
+    <a class="brand" href="/"><span class="spark">✦</span> satele logbooks</a>
+    <nav class="site-nav" id="siteNav" aria-label="Games"></nav>
+  </div>
+</header>
+
+<main class="page">
+  <section class="hero">
+    <img class="mascot" src="/assets/img/capy.svg" alt="" width="96" height="96">
+    <div>
+      <h1>cozy logbooks for cozy games</h1>
+      <p>Tick off quests, pin the bundles you're chasing, and let the little capybara keep count. Free, no sign-up — your progress lives right in your browser.</p>
+    </div>
+  </section>
+
+  <h2 class="sec-title">pick a game ✨</h2>
+  <div class="games" id="games">
+    <div class="game-card skeleton" aria-hidden="true"></div>
+  </div>
+
+  <h2 class="sec-title">how it works</h2>
+  <div class="how">
+    <div class="how-card"><div class="big">✅</div><h3>Tick things off</h3><p>Quests, recipes, research bundles, collections — every entry has a checkbox or little tags for each ingredient.</p></div>
+    <div class="how-card"><div class="big">📌</div><h3>Pin what you need</h3><p>Pin what you're working on and the <b>Needed</b> tab adds up everything you still have to gather.</p></div>
+    <div class="how-card"><div class="big">🔁</div><h3>Dailies reset themselves</h3><p>Daily & weekly lists clear on their own, right on your reset time.</p></div>
+    <div class="how-card"><div class="big">🔒</div><h3>Private by default</h3><p>No accounts, no tracking. Progress is saved only in this browser — grab a backup file anytime to move devices.</p></div>
+  </div>
+</main>
+
+<footer class="site-foot">
+  made with 💖 by satele · fan-made &amp; unofficial — not affiliated with any game studio.<br>
+  Game names belong to their owners. Lists are community-sourced; sources are credited on each game's page.
+</footer>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script src="/assets/js/sky.js" defer></script>
+<script src="/assets/js/home.js" defer></script>
+</body>
+</html>

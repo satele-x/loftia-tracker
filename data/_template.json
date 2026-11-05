@@ -1,0 +1,37 @@
+{
+  "game": "newgame",
+  "name": "New Game",
+  "version": "2026.01.01",
+  "updated": "2026-01-01",
+  "gameVersion": "",
+  "sources": [{"name":"Where the info came from","url":"https://example.com"}],
+  "menus": [
+    { "id": "quests", "name": "Quests", "icon": "📜", "color": 4, "cats": [
+      { "id": "quests.main-story", "name": "Main Story", "icon": "📖", "ordered": true, "items": [
+        {"id":"quests.main-story.first-quest","name":"First Quest","note":"#1 · with Someone"},
+        {"id":"quests.main-story.second-quest","name":"Second Quest","note":"#2"}
+      ]},
+      { "id": "quests.side", "name": "Side Quests", "icon": "💌", "items": [
+        {"id":"quests.side.a-side-quest","name":"A Side Quest","note":"with Someone","after":"First Quest"}
+      ]}
+    ]},
+    { "id": "bundles", "name": "Bundles", "icon": "🔬", "color": 1, "cats": [
+      { "id": "bundles.station-one", "name": "Station One", "icon": "🐟", "items": [
+        {"id":"bundles.station-one.fishy-bundle","name":"Fishy Bundle","note":"unlocks Something","needs":["Fish A ×3","Fish B ×3"]}
+      ]}
+    ]},
+    { "id": "collections", "name": "Collections", "icon": "🐚", "color": 3, "cats": [
+      { "id": "collections.artifacts", "name": "Artifacts", "icon": "🏺", "tags": ["Battered","Used","Spotless"], "items": [
+        {"id":"collections.artifacts.old-toy","name":"Old Toy"}
+      ]}
+    ]},
+    { "id": "dailies", "name": "Dailies", "icon": "🔁", "color": 2, "cats": [
+      { "id": "dailies.daily", "name": "Daily", "icon": "☀️", "reset": "daily", "resetHour": 0, "items": [
+        {"id":"dailies.daily.water-crops","name":"Water crops"}
+      ]},
+      { "id": "dailies.weekly", "name": "Weekly", "icon": "🗓️", "reset": "weekly", "resetHour": 0, "resetDay": 1, "items": [
+        {"id":"dailies.weekly.donate","name":"Weekly donations"}
+      ]}
+    ]}
+  ]
+}

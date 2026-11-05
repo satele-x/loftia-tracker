@@ -1,0 +1,15 @@
+{
+  "games": [
+    {
+      "id": "loftia",
+      "name": "Loftia",
+      "tagline": "Cozy sky-island life — quests, research bundles, inspirations, recipes & collections.",
+      "icon": "☁️",
+      "color": ["#c9b6ff", "#9b83f0"],
+      "status": "live"
+    }
+  ],
+  "comingSoon": [
+    { "name": "Your next cozy obsession", "icon": "🌱" }
+  ]
+}
