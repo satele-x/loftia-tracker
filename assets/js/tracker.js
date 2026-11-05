@@ -238,7 +238,7 @@ function renderTabs() {
     return `<button class="tab ${!isNeeded() && m.id === curMenu().id ? 'on' : ''}" style="--tabc:${col[0]};--tabd:${col[1]}" data-act="menu" data-id="${esc(m.id)}"><span>${esc(m.icon)}</span>${esc(m.name)}<span class="cnt">${s.n}/${s.t}</span></button>`;
   }).join('');
   const tabs = $('#tabs');
-  tabs.innerHTML = `<button class="tab ${isNeeded() ? 'on' : ''}" style="--tabc:#ffb3c8;--tabd:#ef7f9f" data-act="menu" data-id="needed"><span>📌</span>Needed<span class="cnt">${left}</span></button>` + h + `<button class="tab add" data-act="addMenu">＋ new menu</button>`;
+  tabs.innerHTML = `<button class="tab ${isNeeded() ? 'on' : ''}" style="--tabc:#ffb3c8;--tabd:#ef7f9f" data-act="menu" data-id="needed"><span>📌</span>Pinned<span class="cnt">${left}</span></button>` + h + `<button class="tab add" data-act="addMenu">＋ new menu</button>`;
   const on = tabs.querySelector('.tab.on'); // keep the active tab visible on phones
   if (on && tabs.scrollWidth > tabs.clientWidth) tabs.scrollLeft = on.offsetLeft - tabs.clientWidth / 2 + on.offsetWidth / 2;
 }
@@ -272,7 +272,7 @@ function itemCard(c, it, where) {
     <button class="check" data-act="toggle" data-id="${esc(it.id)}" aria-label="${d ? 'Untick' : 'Tick'} ${esc(it.name)}">${CHECK_SVG}</button>
     <div class="txt">${where ? `<div class="where">${where}</div>` : ''}<div class="nm">${esc(it.name)}${NEW.has(it.id) ? '<span class="new-pill">new!</span>' : ''}${!it.official ? '<span class="mine">✎ mine</span>' : ''}</div>${it.note ? `<div class="note">${esc(it.note)}</div>` : ''}${it.myNote ? `<div class="mynote">📝 ${esc(it.myNote)}</div>` : ''}${status}${tags}</div>
     <div class="acts">
-      <button class="pin ${it.pinned ? 'on' : ''}" data-act="pin" data-id="${esc(it.id)}" title="${it.pinned ? 'Unpin' : 'Pin — I need this right now'}" aria-label="${it.pinned ? 'Unpin' : 'Pin'} ${esc(it.name)}">${it.pinned ? '📌' : '📍'}</button>
+      <button class="pin ${it.pinned ? 'on' : ''}" data-act="pin" data-id="${esc(it.id)}" title="${it.pinned ? 'Unpin' : 'Pin — keep it in your Pinned tab'}" aria-label="${it.pinned ? 'Unpin' : 'Pin'} ${esc(it.name)}">${it.pinned ? '📌' : '📍'}</button>
       <button class="fav ${it.fav ? 'on' : ''}" data-act="fav" data-id="${esc(it.id)}" title="Favourite" aria-label="Favourite ${esc(it.name)}">${it.fav ? '⭐' : '☆'}</button>
       <button data-act="editItem" data-id="${esc(it.id)}" title="Edit / notes" aria-label="Edit ${esc(it.name)}">✏️</button>
     </div>
@@ -298,12 +298,12 @@ function renderNeeded() {
   shown.forEach(p => { if (!groups.has(p.c.id)) groups.set(p.c.id, { m: p.m, c: p.c, items: [] }); groups.get(p.c.id).items.push(p.it); });
   v.innerHTML = `
     <div class="cat-head">
-      <h2>📌 Currently needed</h2>
+      <h2>📌 Pinned</h2>
       <div class="progress"><div class="bar"><i style="width:${pct}%"></i></div><span class="pct">${s.n}/${s.t} · ${pct}%</span></div>
       ${pins.some(p => isDone(p.c, p.it)) ? `<button class="small-btn" data-act="unpinDone">✓ unpin finished</button>` : ''}
     </div>
     <div class="toolbar"><label class="toggle"><input type="checkbox" id="hideDone" ${hide ? 'checked' : ''}> hide done</label></div>
-    ${pins.length === 0 ? `<div class="empty"><div class="big">📍</div>Nothing pinned yet!<br>Tap the <b>📍</b> on any quest, bundle or recipe to add it here — it's your “working on it right now” list.</div>` : `
+    ${pins.length === 0 ? `<div class="empty"><div class="big">📍</div>Nothing pinned yet!<br>Tap the <b>📍</b> on any quest, bundle or recipe to add it here — it's your “working on it right now” list. Pin a story quest and the pin hops to the next one when you finish it ✨</div>` : `
       ${gather.length ? `<div class="gather"><div class="gather-h">🧺 Stuff to gather <span>${gather.length} thing${gather.length === 1 ? '' : 's'}</span></div>
         <div class="gather-list">${gather.map(g => `<span class="g" title="for: ${esc(g.for.join(', '))}">${esc(g.n)}${g.qtyKnown ? ` <b>×${g.q}</b>` : (g.for.length > 1 ? ` <b>(${g.for.length} bundles)</b>` : '')}</span>`).join('')}</div>
         <div class="hint">Unticked items from your pinned entries, added up. Tick them off on the cards below as you hand them in.</div></div>` : ''}
@@ -382,20 +382,28 @@ document.addEventListener('click', e => {
   const hit = t.dataset.id && act !== 'menu' && act !== 'cat' ? locate(t.dataset.id) : null;
   if (act === 'menu') { U.ui.menu = t.dataset.id; U.ui.q = ''; save(); render(); }
   else if (act === 'cat') { U.ui.cat[curMenu().id] = t.dataset.id; U.ui.q = ''; save(); render(); }
-  else if (act === 'toggle' && hit) { const before = isDone(hit.c, hit.it); setAll(hit.c, hit.it, !before); afterChange(hit.c, before, isDone(hit.c, hit.it), t); }
-  else if (act === 'pip' && hit) { const before = isDone(hit.c, hit.it), i = +t.dataset.i; hit.it.pips[i] = !hit.it.pips[i]; afterChange(hit.c, before, isDone(hit.c, hit.it), t); }
-  else if (act === 'part' && hit) { const before = isDone(hit.c, hit.it), p = hit.it.parts[+t.dataset.i]; p.on = !p.on; afterChange(hit.c, before, isDone(hit.c, hit.it), t); }
+  else if (act === 'toggle' && hit) { const before = isDone(hit.c, hit.it); setAll(hit.c, hit.it, !before); afterChange(hit.c, before, isDone(hit.c, hit.it), t, hit.it); }
+  else if (act === 'pip' && hit) { const before = isDone(hit.c, hit.it), i = +t.dataset.i; hit.it.pips[i] = !hit.it.pips[i]; afterChange(hit.c, before, isDone(hit.c, hit.it), t, hit.it); }
+  else if (act === 'part' && hit) { const before = isDone(hit.c, hit.it), p = hit.it.parts[+t.dataset.i]; p.on = !p.on; afterChange(hit.c, before, isDone(hit.c, hit.it), t, hit.it); }
   else if (act === 'fav' && hit) { hit.it.fav = !hit.it.fav; save(); renderCat(); }
-  else if (act === 'pin' && hit) { hit.it.pinned = !hit.it.pinned; save(); render(); toast(hit.it.pinned ? '📌 added to Needed' : 'unpinned'); }
+  else if (act === 'pin' && hit) { hit.it.pinned = !hit.it.pinned; save(); render(); toast(hit.it.pinned ? '📌 pinned!' : 'unpinned'); }
   else if (act === 'unpinDone') { allPinned().forEach(p => { if (isDone(p.c, p.it)) p.it.pinned = false; }); save(); render(); toast('tidied up ✨'); }
   else if (act === 'editItem' && hit) openItemModal(hit);
   else if (act === 'editCat') openCatModal(curCat());
   else if (act === 'addCat') openCatModal(null);
   else if (act === 'addMenu') openMenuModal(null);
 });
-function afterChange(c, before, after, el) {
+function afterChange(c, before, after, el, it) {
   const all = c.items.length && catStats(c).full === c.items.length;
+  // ordered chains (main story, character quests): a finished pinned quest hands its pin to the next one
+  let moved = null;
+  if (!before && after && it && it.pinned && c.ordered) {
+    const next = c.items.find(x => x !== it && !isDone(c, x));
+    it.pinned = false;
+    if (next) { next.pinned = true; moved = next; }
+  }
   save(); render();
+  if (moved) setTimeout(() => toast(`📌 next up: ${moved.name}`), all ? 1600 : 350);
   if (!before && after) {
     const r = el.getBoundingClientRect(); burst(r.left + r.width / 2, r.top + r.height / 2, 7);
     if (all) setTimeout(() => { burst(innerWidth / 2, innerHeight / 3, 26); toast(`🎉 ${c.name} complete!`); }, 150);
@@ -447,7 +455,7 @@ function openItemModal({ m: menu, c, it }) {
       <div class="ro-name">${esc(it.name)}</div>
       <div class="ro-hint">${it.note ? esc(it.note) + '<br>' : ''}This entry comes from the shared list, so it updates by itself — you can add your own note.</div>
       <div class="field"><label>My note</label><input id="iMy" value="${esc(it.myNote)}" placeholder="e.g. need to grow more tomatoes first"></div>
-      <label class="toggle" style="height:44px"><input type="checkbox" id="iPin" ${it.pinned ? 'checked' : ''}> 📌 I need this right now</label>
+      <label class="toggle" style="height:44px"><input type="checkbox" id="iPin" ${it.pinned ? 'checked' : ''}> 📌 pin this</label>
       <div class="m-actions"><button class="btn" data-m="hide">🙈 hide from my list</button><span style="flex:1"></span><button class="btn ghost" data-m="x">cancel</button><button class="btn primary" data-m="ok">save</button></div>`, m => {
       m.querySelector('[data-m=x]').onclick = closeModal;
       m.querySelector('[data-m=hide]').onclick = () => { persist(); U.hidden.items[it.id] = 1; rebuild(); save(); closeModal(); render(); toast('hidden — bring it back from 🧺'); };
@@ -464,8 +472,8 @@ function openItemModal({ m: menu, c, it }) {
     <div class="field"><label>Note</label><input id="iNote" value="${esc(it.note)}" placeholder="where to find it, what it unlocks…"></div>
     ${hasAfter ? `<div class="field"><label>Unlocks after (quest name)</label><input id="iAfter" value="${esc(it.after)}" placeholder="leave blank if always available"></div>` : ''}
     <div class="field"><label>Needs (optional)</label><textarea id="iParts" placeholder="One per line, e.g.\nTomato ×2\nPlank">${esc(it.parts.map(p => p.label).join('\n'))}</textarea>
-      <div class="hint">Each line becomes a tag you can tick. Add “×3” for amounts and they'll add up in 📌 Needed.</div></div>
-    <label class="toggle" style="height:44px;margin-bottom:6px"><input type="checkbox" id="iPin" ${it.pinned ? 'checked' : ''}> 📌 I need this right now</label>
+      <div class="hint">Each line becomes a tag you can tick. Add “×3” for amounts and they'll add up in 📌 Pinned.</div></div>
+    <label class="toggle" style="height:44px;margin-bottom:6px"><input type="checkbox" id="iPin" ${it.pinned ? 'checked' : ''}> 📌 pin this</label>
     ${others.length ? `<div class="field"><label>Move to</label><select id="iMove" class="sort" style="width:100%"><option value="">— stay in ${esc(c.name)} —</option>${others.map(o => `<option value="${esc(o.id)}">${esc(o.icon)} ${esc(o.name)}</option>`).join('')}</select></div>` : ''}
     <div class="m-actions"><button class="btn danger" data-m="del">🗑 delete</button><span style="flex:1"></span><button class="btn ghost" data-m="x">cancel</button><button class="btn primary" data-m="ok">save</button></div>`, m => {
     m.querySelector('[data-m=x]').onclick = closeModal;

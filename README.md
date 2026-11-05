@@ -46,10 +46,10 @@ When someone opens the page, the logbook combines the two. It never stores anyth
    | `id` | **permanent** ID that progress is saved against (see the golden rule) |
    | `name` | what's shown; safe to fix typos |
    | `note` | grey line under the name |
-   | `needs` | tickable tags; add `×3` and they're summed up in 📌 Needed |
+   | `needs` | tickable tags; add `×3` and they're summed up in 📌 Pinned |
    | `after` | quest **name** that unlocks it; shows 🔒 until that quest is ticked |
 
-   Category options: `"tags": ["Battered","Used","Spotless"]` gives the same tags to every entry. `"ordered": true` shows the "▶ next up" badge. `"reset": "daily"` or `"weekly"`, with `resetHour` (0–23) and `resetDay` (0 = Sunday), makes ticks clear automatically.
+   Category options: `"tags": ["Battered","Used","Spotless"]` gives the same tags to every entry. `"ordered": true` shows the "▶ next up" badge, and a pinned entry passes its pin to the next one when it's finished. `"reset": "daily"` or `"weekly"`, with `resetHour` (0–23) and `resetDay` (0 = Sunday), makes ticks clear automatically.
 
 2. **Bump `"version"`**, for example `"2026.11.12"`. Visitors then see "📦 lists updated", and new entries get a **new!** badge.
 3. Run the checker: `node tools/validate.mjs`
