@@ -359,7 +359,7 @@ function itemCard(c, it, where) {
     if (dep === false) { locked = true; status = `<div class="qs lock">🔒 after “${esc(it.after)}”</div>`; }
     else if (SHOW_AVAILABLE) status = `<div class="qs open">✨ available</div>`;
   }
-  if (it.badges && it.badges.length) status = it.badges.map(b => `<span class="qs badge">${esc(b)}</span>`).join(' ') + status;
+  if (it.badges && it.badges.length) status = it.badges.map(b => `<span class="qs badge badge-${esc(String(b).toLowerCase().replace(/[^a-z0-9]+/g, '-'))}">${esc(b)}</span>`).join(' ') + status;
   if (it.pick) { const on = it.parts.filter(p => p.on).length; status += `<div class="qs pick">${Math.min(on, it.pick)}/${it.pick} — pick any ${it.pick}</div>`; }
   if (!d && !locked && c.ordered && c.items.find(x => !isDone(c, x)) === it) next = true;
   return `<div class="item ${d ? 'done' : ''} ${it.pinned ? 'pinned' : ''} ${locked ? 'locked' : ''} ${next ? 'next' : ''} ${dots ? 'has-levels' : ''}">${dots}

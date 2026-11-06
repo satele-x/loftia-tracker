@@ -1,7 +1,7 @@
 {
   "game": "loftia",
   "name": "Loftia",
-  "version": "2026.11.06n",
+  "version": "2026.11.06o",
   "updated": "2026-11-06",
   "gameVersion": "Early Access",
   "sources": [{"name":"Loftia Codex","url":"https://loftiacodex.com/"},{"name":"Cluefile recipes","url":"https://cluefile.com/loftia/data/recipes/"},{"name":"Loftians inspiration guide","url":"https://loftians.com/guides/loftia-inspiration-guide/"},{"name":"Wikily fish list","url":"https://wikily.gg/loftia/fish"}],
@@ -330,12 +330,12 @@
     { "id": "station-upgrades", "name": "Station Upgrades", "icon": "⬆️", "color": 1, "cats": [
       { "id": "recipes.station-upgrades", "name": "Stations", "icon": "⬆️", "note": "Upgrade a station using its Upgrade option once the recipe is unlocked", "items": [
         {"id":"recipes.station-upgrades.project-station-lv-2","name":"Project Station Lv. 2","note":"7 energy","after":"Anadromous Odyssey","needs":["Copper Scraps ×3","Screws ×5","Scrap Wire ×5"]},
-        {"id":"recipes.station-upgrades.refining-station-lv-2","name":"Refining Station Lv. 2","note":"7 energy","badges":["research reward"],"after":"Anadromous Odyssey","needs":["Screws ×10","Metal Plate ×2","Plank ×2"]},
+        {"id":"recipes.station-upgrades.refining-station-lv-2","name":"Refining Station Lv. 2","note":"7 energy","after":"Anadromous Odyssey","needs":["Screws ×10","Metal Plate ×2","Plank ×2"]},
         {"id":"recipes.station-upgrades.carpentry-station-lv-2","name":"Carpentry Station Lv. 2","note":"7 energy","after":"Craftcore","needs":["Screws ×10","Flexible Lumber ×2"]},
         {"id":"recipes.station-upgrades.tailoring-station-lv-2","name":"Tailoring Station Lv. 2","note":"7 energy","after":"Eco Weave","needs":["Screws ×10","Recycled Polyester ×2"]},
         {"id":"recipes.station-upgrades.cooking-station-lv-2","name":"Cooking Station Lv. 2","note":"7 energy","after":"Forest Cook","needs":["Screws ×10","Copper Bar ×2"]},
         {"id":"recipes.station-upgrades.project-station-lv-3","name":"Project Station Lv. 3","note":"10 energy","needs":["Electronic Scraps ×5","Rusted Metal ×2","Scrap Wire ×10"]},
-        {"id":"recipes.station-upgrades.refining-station-lv-3","name":"Refining Station Lv. 3","note":"10 energy","badges":["research reward"],"needs":["Gears ×5","Magnets ×5","Power Cable ×2"]},
+        {"id":"recipes.station-upgrades.refining-station-lv-3","name":"Refining Station Lv. 3","note":"10 energy","needs":["Gears ×5","Magnets ×5","Power Cable ×2"]},
         {"id":"recipes.station-upgrades.carpentry-station-lv-3","name":"Carpentry Station Lv. 3","note":"10 energy","after":"Sturdy Foundations","needs":["Eco Plank ×4","Screws ×10","Magnets ×5"]},
         {"id":"recipes.station-upgrades.tailoring-station-lv-3","name":"Tailoring Station Lv. 3","note":"10 energy","after":"Thrifty Textiles","needs":["Upcycled Fabric ×4","Screws ×10","Circuit Boards ×2"]},
         {"id":"recipes.station-upgrades.cooking-station-lv-3","name":"Cooking Station Lv. 3","note":"10 energy","after":"Urban Eats","needs":["Bricks ×4","Screws ×10","Power Cable ×2"]}
@@ -409,23 +409,17 @@
     ]},
     { "id": "pets", "name": "Pets", "icon": "🐱", "color": 0, "cats": [
       { "id": "pets.rescues", "name": "Rescues", "icon": "🐶", "note": "Pets you rescue by finding clues and feeding them. You need a Basic Habitat for each pet you keep.", "items": [
-        {"id":"pets.rescues.dog","name":"Small Dog","note":"Quest: Notes From the Fauna (Joanna) · found at The Hanging Gardens · reward: Basic Habitat recipe","badges":["quest"],"after":"Field Research","needs":["Dog clues ×5","Lettuce ×4","Carrot ×2"]},
-        {"id":"pets.rescues.cat","name":"Shorthair Cat","note":"Quest: Fur Real? (Joanna) · clues are in Loftia City · found at The Hanging Gardens","badges":["quest"],"after":"Notes From the Fauna","needs":["Cat clues ×10","Cauliflower ×6","Watermelon ×3"]},
-        {"id":"pets.rescues.capybara","name":"Capybara","note":"Quest: Fur-ther Investigation (Mita & Joanna) · clues are spread across districts · found in Loftia City","badges":["quest"],"after":"Mending What's Broken","needs":["Capybara clues ×30","Spinach ×10","Wild Greens ×10"]},
-        {"id":"pets.rescues.alpaca","name":"Alpaca","note":"Clues have a chance of being found after completing an adventure · found in Loftia City","badges":["exploration"],"needs":["Alpaca clues ×50","Straw ×8","Garden Salad ×10"]},
-        {"id":"pets.rescues.tortoise","name":"Tortoise","note":"Found at The Hanging Gardens","badges":["exploration"],"needs":["Tortoise clues ×50","Banana ×15","Ratatouille ×10"]},
-        {"id":"pets.rescues.duck","name":"Duck","note":"Clues are found while using the Locator in an urbex · found at The Gridfall","badges":["exploration"],"needs":["Duck clues ×50","Vines ×20","Fruit Salad ×10"]}
+        {"id":"pets.rescues.dog","name":"Dog","badges":["Quest","Hanging Gardens"],"after":"Field Research","needs":["Dog clues ×5","Lettuce ×4","Carrot ×2"]},
+        {"id":"pets.rescues.cat","name":"Cat","badges":["Quest","Hanging Gardens"],"after":"Notes From the Fauna","needs":["Cat clues ×10","Cauliflower ×6","Watermelon ×3"]},
+        {"id":"pets.rescues.capybara","name":"Capybara","badges":["Quest","Loftia City"],"after":"Mending What's Broken","needs":["Capybara clues ×30","Spinach ×10","Wild Greens ×10"]},
+        {"id":"pets.rescues.alpaca","name":"Alpaca","badges":["Exploration","Loftia City"],"needs":["Alpaca clues ×50","Straw ×8","Garden Salad ×10"]},
+        {"id":"pets.rescues.tortoise","name":"Tortoise","badges":["Exploration","Hanging Gardens"],"needs":["Tortoise clues ×50","Banana ×15","Ratatouille ×10"]},
+        {"id":"pets.rescues.duck","name":"Duck","badges":["Exploration","The Gridfall"],"needs":["Duck clues ×50","Vines ×20","Fruit Salad ×10"]}
       ]},
       { "id": "pets.special", "name": "Special pets", "icon": "✨", "note": "Not obtainable through normal play", "items": [
-        {"id":"pets.special.waddle","name":"Waddle","note":"Outdoorsy robot · Kickstarter backer reward","badges":["kickstarter"]},
-        {"id":"pets.special.wheelie","name":"Wheelie","note":"Zooms around Loftia City · Kickstarter backer reward","badges":["kickstarter"]},
-        {"id":"pets.special.greeny","name":"Greeny","note":"Terrarium robot · Backer Boutique DLC (Supporter Pack or Growing Together Bundle)","badges":["dlc"]}
-      ]},
-      { "id": "pets.habitats", "name": "Habitats", "icon": "🏠", "note": "You start with room for 1 habitat; permits add more", "items": [
-        {"id":"pets.habitats.basic-habitat","name":"Basic Habitat","note":"Craft at Project Station Lv.2 · recipe from Notes From the Fauna","after":"Notes From the Fauna","needs":["Flexible Lumber ×2","Resin ×2","Jute Fabric ×2"]},
-        {"id":"pets.habitats.habitat-permit-2","name":"Habitat Permit (2nd habitat)","needs":["Dew ×500"]},
-        {"id":"pets.habitats.habitat-permit-3","name":"Habitat Permit (3rd habitat)","needs":["Dew ×2500","Bloom ×10"]},
-        {"id":"pets.habitats.habitat-permit-4","name":"Habitat Permit (4th habitat)","needs":["Dew ×5000","Bloom ×25"]}
+        {"id":"pets.special.waddle","name":"Waddle","badges":["Kickstarter"]},
+        {"id":"pets.special.wheelie","name":"Wheelie","badges":["Kickstarter"]},
+        {"id":"pets.special.greeny","name":"Greeny","badges":["DLC"]}
       ]}
     ]},
     { "id": "housing", "name": "Permits", "icon": "🏠", "color": 4, "cats": [
