@@ -63,6 +63,7 @@ for (const f of fs.readdirSync(path.join(root, 'data'))) {
       const cctx = `${mctx} › ${c.name || ci}`;
       seeId(c.id, cctx);
       if (!c.name) err(where(`${cctx}: missing "name"`));
+      if (c.resetUtcHour != null && (!Number.isInteger(c.resetUtcHour) || c.resetUtcHour < 0 || c.resetUtcHour > 23)) err(where(`${cctx}: "resetUtcHour" must be 0–23`));
       if (c.reset != null && !RESETS.includes(c.reset)) err(where(`${cctx}: "reset" must be "daily" or "weekly"`));
       if (c.tags && !Array.isArray(c.tags)) err(where(`${cctx}: "tags" must be a list`));
       if (!Array.isArray(c.items)) { err(where(`${cctx}: "items" must be a list`)); return; }
@@ -78,6 +79,7 @@ for (const f of fs.readdirSync(path.join(root, 'data'))) {
         if (it.badges && (!Array.isArray(it.badges) || it.badges.some(b => typeof b !== 'string'))) err(where(`${ictx}: "badges" must be a list of text, e.g. ["quest"]`));
         if (it.levels && (!Array.isArray(it.levels) || it.levels.some(l => !l || !l.name || (l.needs && !Array.isArray(l.needs))))) err(where(`${ictx}: "levels" must be a list like [{"name":"Limit 2","needs":["Dew ×125"]}]`));
         if (it.levels && (it.needs || c.tags)) warn(where(`${ictx}: has "levels" plus "needs"/tags — "levels" wins`));
+        if (it.startLv != null && (!Number.isInteger(it.startLv) || !it.levels || it.startLv < 0 || it.startLv > it.levels.length)) err(where(`${ictx}: "startLv" must be a whole number from 0 to the number of "levels"`));
         if (it.after) afters.push([it.after, ictx]);
         const n = (it.name || '').toLowerCase();
         if (local.has(n)) warn(where(`${ictx}: same name appears twice in this category`));

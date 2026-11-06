@@ -123,7 +123,8 @@ function mergeItem(it, C) {
     badges: Array.isArray(it.badges) ? it.badges : [],
     // tiered upgrades: [{label, needs}] + how many tiers are done
     levels: (it.levels || []).map(l => ({ label: l.name, needs: l.needs || [] })),
-    lv: Math.min(p.lv || 0, (it.levels || []).length)
+    startLv: Math.min(it.startLv || 0, (it.levels || []).length),
+    lv: Math.min(p.lv != null ? p.lv : (it.startLv || 0), (it.levels || []).length)
   };
 }
 const customItem = x => ({ id: x.id || rid(), official: false, name: x.name || '?', note: x.note || '', myNote: '', after: x.after || '',
@@ -144,7 +145,10 @@ function buildState() {
       const co = U.cats[c.id] || {};
       const C = { id: c.id, official: true, name: co.name || c.name, icon: co.icon || c.icon, note: c.note || '', pipLabels: c.tags || [], ordered: !!c.ordered,
         reset: co.reset !== undefined ? co.reset : (c.reset || ''),
-        resetHour: co.resetHour != null ? co.resetHour : (c.resetHour || 0),
+        // server resets are stored in UTC in the data file so they're right in every timezone
+        resetUtcHour: (co.resetHour == null && co.reset === undefined && c.resetUtcHour != null) ? c.resetUtcHour : null,
+        userReset: co.resetHour != null || co.reset !== undefined,
+        resetHour: co.resetHour != null ? co.resetHour : (c.resetUtcHour != null ? new Date(Date.UTC(2000, 0, 3, c.resetUtcHour)).getHours() : (c.resetHour || 0)),
         resetDay: co.resetDay != null ? co.resetDay : (c.resetDay != null ? c.resetDay : 1),
         lastReset: co.lastReset || 0, items: [] };
       c.items.forEach(it => { if (!U.hidden.items[it.id]) C.items.push(mergeItem(it, C)); });
@@ -182,9 +186,7 @@ function persist() {
       const dc = IDX.cats[C.id], co = {};
       if (C.name !== dc.name) co.name = C.name;
       if (C.icon !== dc.icon) co.icon = C.icon;
-      if (C.reset !== (dc.reset || '')) co.reset = C.reset;
-      if (C.resetHour !== (dc.resetHour || 0)) co.resetHour = C.resetHour;
-      if (C.resetDay !== (dc.resetDay != null ? dc.resetDay : 1)) co.resetDay = C.resetDay;
+      if (C.userReset) { co.reset = C.reset; co.resetHour = C.resetHour; co.resetDay = C.resetDay; } // only when the visitor changed it
       if (C.lastReset) co.lastReset = C.lastReset;
       if (Object.keys(co).length) cats[C.id] = co; else delete cats[C.id];
       C.items.forEach(I => {
@@ -193,7 +195,7 @@ function persist() {
         if (I.done) p.d = 1;
         if (I.pinned) p.pin = 1;
         if (I.fav) p.fav = 1;
-        if (I.lv) p.lv = I.lv;
+        if (I.levels.length && I.lv !== (I.startLv || 0)) p.lv = I.lv;
         if (I.myNote) p.note = I.myNote;
         if (I.pips.some(Boolean)) p.p = I.pips.map(b => b ? 1 : 0);
         const pk = {}; I.parts.forEach(pt => { if (pt.on) pk[partKey(pt.label)] = 1; });
@@ -261,12 +263,22 @@ function questDone(name) {
 
 /* ---------- daily / weekly resets ---------- */
 function lastBoundary(c, now) {
+  if (c.resetUtcHour != null) {
+    const u = new Date(now); u.setUTCHours(c.resetUtcHour, 0, 0, 0);
+    if (u.getTime() > now) u.setUTCDate(u.getUTCDate() - 1);
+    if (c.reset === 'weekly') { const want = c.resetDay == null ? 1 : c.resetDay; while (u.getUTCDay() !== want) u.setUTCDate(u.getUTCDate() - 1); }
+    return u.getTime();
+  }
   const d = new Date(now); d.setHours(c.resetHour || 0, 0, 0, 0);
   if (d.getTime() > now) d.setDate(d.getDate() - 1);
   if (c.reset === 'weekly') { const want = c.resetDay == null ? 1 : c.resetDay; while (d.getDay() !== want) d.setDate(d.getDate() - 1); }
   return d.getTime();
 }
-function nextBoundary(c, now) { const l = new Date(lastBoundary(c, now)); l.setDate(l.getDate() + (c.reset === 'weekly' ? 7 : 1)); return l.getTime(); }
+function nextBoundary(c, now) {
+  const l = new Date(lastBoundary(c, now)), days = c.reset === 'weekly' ? 7 : 1;
+  if (c.resetUtcHour != null) l.setUTCDate(l.getUTCDate() + days); else l.setDate(l.getDate() + days);
+  return l.getTime();
+}
 function checkResets() {
   const now = Date.now(); let changed = false;
   state.menus.forEach(m => m.cats.forEach(c => {
@@ -304,7 +316,33 @@ function renderChips() {
 }
 
 const CHECK_SVG = `<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3.2 3L13 4.5" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+const CURRENCY = { dew: '💧', bloom: '🌸' };
+const priceTag = needs => needs.length ? needs.map(n => { const [nm, q] = splitQty(n); const ic = CURRENCY[nm.toLowerCase()]; return ic ? `${ic} ${q.toLocaleString('en-US')}` : esc(fmtQty(n)); }).join(' + ') : '?';
+function levelCard(c, it, where) {
+  const n = it.levels.length, maxed = it.lv >= n, nx = it.levels[it.lv];
+  let track = '';
+  it.levels.forEach((l, i) => {
+    if (i) track += `<span class="lv-seg ${i < it.lv ? 'on' : ''}"></span>`;
+    track += `<button class="lv-dot ${i < it.lv ? 'on' : ''}" data-act="lvl" data-id="${esc(it.id)}" data-i="${i}" title="${esc(l.label)}${l.needs.length ? ' · ' + esc(l.needs.map(fmtQty).join(' + ')) : ''}" aria-label="${esc(l.label)}${i < it.lv ? ' (done)' : ''}"></button>`;
+  });
+  return `<div class="item lvl-card ${maxed ? 'done' : ''} ${it.pinned ? 'pinned' : ''}">
+    ${it.pinned ? '<span class="fav-badge">📌</span>' : it.fav ? '<span class="fav-badge">⭐</span>' : ''}
+    <div class="lc-top">
+      <div class="txt">${where ? `<div class="where">${where}</div>` : ''}<div class="nm">${esc(it.name)}</div>${it.note ? `<div class="note">${esc(it.note)}</div>` : ''}${it.myNote ? `<div class="mynote">📝 ${esc(it.myNote)}</div>` : ''}</div>
+      <div class="acts">
+        <button class="pin ${it.pinned ? 'on' : ''}" data-act="pin" data-id="${esc(it.id)}" title="${it.pinned ? 'Unpin' : 'Pin — add the next upgrade to your gather list'}" aria-label="${it.pinned ? 'Unpin' : 'Pin'} ${esc(it.name)}">${it.pinned ? '📌' : '📍'}</button>
+        <button class="fav ${it.fav ? 'on' : ''}" data-act="fav" data-id="${esc(it.id)}" title="Favourite" aria-label="Favourite ${esc(it.name)}">${it.fav ? '⭐' : '☆'}</button>
+        <button data-act="editItem" data-id="${esc(it.id)}" title="Notes" aria-label="Edit ${esc(it.name)}">✏️</button>
+      </div>
+    </div>
+    <div class="lc-bottom">
+      <div class="lv-track" role="group" aria-label="${esc(it.name)}: tier ${it.lv} of ${n}">${track}</div>
+      ${maxed ? `<span class="lc-up max">✨ maxed</span>` : `<button class="lc-up" data-act="lvlup" data-id="${esc(it.id)}" title="Bought it? Tap to move to ${esc(nx.label)}">${priceTag(nx.needs)}</button>`}
+    </div>
+  </div>`;
+}
 function itemCard(c, it, where) {
+  if (it.levels && it.levels.length) return levelCard(c, it, where);
   const d = isDone(c, it);
   let tags = '', dots = '';
   if (it.levels && it.levels.length) {
@@ -459,6 +497,7 @@ document.addEventListener('click', e => {
     else setAll(hit.c, hit.it, !before);
     afterChange(hit.c, before, isDone(hit.c, hit.it), t, hit.it);
   }
+  else if (act === 'lvlup' && hit) { const before = isDone(hit.c, hit.it); hit.it.lv = Math.min(hit.it.lv + 1, hit.it.levels.length); afterChange(hit.c, before, isDone(hit.c, hit.it), t, hit.it); }
   else if (act === 'lvl' && hit) { const before = isDone(hit.c, hit.it), i = +t.dataset.i; hit.it.lv = hit.it.lv === i + 1 ? i : i + 1; afterChange(hit.c, before, isDone(hit.c, hit.it), t, hit.it); }
   else if (act === 'pip' && hit) { const before = isDone(hit.c, hit.it), i = +t.dataset.i; hit.it.pips[i] = !hit.it.pips[i]; afterChange(hit.c, before, isDone(hit.c, hit.it), t, hit.it); }
   else if (act === 'part' && hit) { const before = isDone(hit.c, hit.it), p = hit.it.parts[+t.dataset.i]; p.on = !p.on; afterChange(hit.c, before, isDone(hit.c, hit.it), t, hit.it); }
@@ -619,7 +658,7 @@ function openCatModal(c) {
           target.pipLabels = pips;
         }
       }
-      if (target.reset !== rs || (rs && (target.resetHour !== rh || target.resetDay !== rd))) target.lastReset = Date.now();
+      if (target.reset !== rs || (rs && (target.resetHour !== rh || target.resetDay !== rd))) { target.lastReset = Date.now(); target.resetUtcHour = null; target.userReset = true; }
       target.reset = rs; target.resetHour = rh; target.resetDay = rd;
       target.items.push(...bulk);
       save(); closeModal(); render();

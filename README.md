@@ -47,8 +47,10 @@ When someone opens the page, the logbook combines the two. It never stores anyth
    | `needs` | tickable tags; add `×3` and they're summed up in 📌 Pinned |
    | `after` | quest **name** that unlocks it; shows 🔒 until that quest is ticked |
    | `pick` | for "any N of these" bundles: done once N of the `needs` are ticked (e.g. `"pick": 5`) |
+   | `levels` | tiered upgrades (permits): `[{"name":"Tier 2","needs":["Dew ×25"]}, …]`, shown as dots + the next price |
+   | `startLv` | how many `levels` everyone starts with already done (e.g. `1` = Tier 1 is free) |
 
-   Category options: `"note"` shows a line under the heading (e.g. the room reward). `"tags": ["Battered","Used","Spotless"]` gives the same tags to every entry. `"ordered": true` shows the "▶ next up" badge, and a pinned entry passes its pin to the next one when it's finished. `"reset": "daily"` or `"weekly"`, with `resetHour` (0–23) and `resetDay` (0 = Sunday), makes ticks clear automatically.
+   Category options: `"note"` shows a line under the heading (e.g. the room reward). `"tags": ["Battered","Used","Spotless"]` gives the same tags to every entry. `"ordered": true` shows the "▶ next up" badge, and a pinned entry passes its pin to the next one when it's finished. `"reset": "daily"` or `"weekly"` makes ticks clear automatically. Use `"resetUtcHour": 3` for a game's server reset (UTC, so it's right in every timezone), or `resetHour` (0–23) for the visitor's own local time; `resetDay` (0 = Sunday) picks the day for weekly.
 
 2. **Bump `"version"`**, for example `"2026.11.12"`. Visitors then see "📦 lists updated", and new entries get a **new!** badge.
 3. Run the checker: `node tools/validate.mjs`
