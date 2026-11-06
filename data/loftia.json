@@ -1,7 +1,7 @@
 {
   "game": "loftia",
   "name": "Loftia",
-  "version": "2026.11.06p",
+  "version": "2026.11.06q",
   "updated": "2026-11-06",
   "gameVersion": "Early Access",
   "sources": [{"name":"Loftia Codex","url":"https://loftiacodex.com/"},{"name":"Cluefile recipes","url":"https://cluefile.com/loftia/data/recipes/"},{"name":"Loftians inspiration guide","url":"https://loftians.com/guides/loftia-inspiration-guide/"},{"name":"Wikily fish list","url":"https://wikily.gg/loftia/fish"}],
@@ -141,14 +141,14 @@
         {"id":"inspiration.lindas-fashion.forest-outfit-set-b","name":"Forest Outfit Set B","badges":["Hanging Gardens"],"after":"A Call From the Gardens","needs":["Watermelon ×5","Wheat ×9"]},
         {"id":"inspiration.lindas-fashion.enchanted-outfit-set-a","name":"Enchanted Outfit Set A","badges":["Hanging Gardens"],"after":"A Call From the Gardens","needs":["Grape ×6","Onion ×10"]},
         {"id":"inspiration.lindas-fashion.enchanted-outfit-set-b","name":"Enchanted Outfit Set B","badges":["Hanging Gardens"],"after":"A Call From the Gardens","needs":["Wheat ×10","Cinnamon ×12"]},
-        {"id":"inspiration.lindas-fashion.graffiti-outfit-set-a","name":"Graffiti Outfit Set A","badges":["The Gridfall"],"after":"Everything Is Connected","needs":["Used Puzzle Cube ×7","Used Action Figure ×5"]},
-        {"id":"inspiration.lindas-fashion.graffiti-outfit-set-b","name":"Graffiti Outfit Set B","badges":["The Gridfall"],"after":"Everything Is Connected","needs":["Pineapple ×8","Chili Pepper ×10"]},
-        {"id":"inspiration.lindas-fashion.upcycled-outfit-set-a","name":"Upcycled Outfit Set A","badges":["The Gridfall"],"after":"Everything Is Connected","needs":["Basil ×12","Rice ×8"]},
-        {"id":"inspiration.lindas-fashion.upcycled-outfit-set-b","name":"Upcycled Outfit Set B","badges":["The Gridfall"],"after":"Everything Is Connected","needs":["Used Ruby Doll ×6","Used Rubber Duck ×8"]},
-        {"id":"inspiration.lindas-fashion.recycled-outfit-set-a","name":"Recycled Outfit Set A","badges":["The Gridfall"],"after":"Everything Is Connected","needs":["Rice ×8","Radish ×12"]},
-        {"id":"inspiration.lindas-fashion.recycled-outfit-set-b","name":"Recycled Outfit Set B","badges":["The Gridfall"],"after":"Everything Is Connected","needs":["Used Fooby ×8","Used Kevin Says ×10"]},
-        {"id":"inspiration.lindas-fashion.techwear-outfit-set-a","name":"Techwear Outfit Set A","badges":["The Gridfall"],"after":"Everything Is Connected","needs":["Used Lava Lamp ×10","Spotless Blockia 3310 ×6"]},
-        {"id":"inspiration.lindas-fashion.techwear-outfit-set-b","name":"Techwear Outfit Set B","badges":["The Gridfall"],"after":"Everything Is Connected","needs":["Pineapple ×10","Rice ×15"]}
+        {"id":"inspiration.lindas-fashion.graffiti-outfit-set-a","name":"Graffiti Outfit Set A","badges":["Gridfall"],"after":"Everything Is Connected","needs":["Used Puzzle Cube ×7","Used Action Figure ×5"]},
+        {"id":"inspiration.lindas-fashion.graffiti-outfit-set-b","name":"Graffiti Outfit Set B","badges":["Gridfall"],"after":"Everything Is Connected","needs":["Pineapple ×8","Chili Pepper ×10"]},
+        {"id":"inspiration.lindas-fashion.upcycled-outfit-set-a","name":"Upcycled Outfit Set A","badges":["Gridfall"],"after":"Everything Is Connected","needs":["Basil ×12","Rice ×8"]},
+        {"id":"inspiration.lindas-fashion.upcycled-outfit-set-b","name":"Upcycled Outfit Set B","badges":["Gridfall"],"after":"Everything Is Connected","needs":["Used Ruby Doll ×6","Used Rubber Duck ×8"]},
+        {"id":"inspiration.lindas-fashion.recycled-outfit-set-a","name":"Recycled Outfit Set A","badges":["Gridfall"],"after":"Everything Is Connected","needs":["Rice ×8","Radish ×12"]},
+        {"id":"inspiration.lindas-fashion.recycled-outfit-set-b","name":"Recycled Outfit Set B","badges":["Gridfall"],"after":"Everything Is Connected","needs":["Used Fooby ×8","Used Kevin Says ×10"]},
+        {"id":"inspiration.lindas-fashion.techwear-outfit-set-a","name":"Techwear Outfit Set A","badges":["Gridfall"],"after":"Everything Is Connected","needs":["Used Lava Lamp ×10","Spotless Blockia 3310 ×6"]},
+        {"id":"inspiration.lindas-fashion.techwear-outfit-set-b","name":"Techwear Outfit Set B","badges":["Gridfall"],"after":"Everything Is Connected","needs":["Pineapple ×10","Rice ×15"]}
       ]},
       { "id": "inspiration.estellas-furniture", "name": "Estella's Furniture", "icon": "🪑", "items": [
         {"id":"inspiration.estellas-furniture.pastel-furniture-set-a","name":"Pastel Furniture Set A","badges":["Loftia City"],"after":"Creative Block","needs":["Carrot ×6"]},
@@ -163,14 +163,14 @@
         {"id":"inspiration.estellas-furniture.bamboo-furniture-set-b","name":"Bamboo Furniture Set B","badges":["Hanging Gardens"],"after":"A Call From the Gardens","needs":["Coconut ×8","Grape ×5"]},
         {"id":"inspiration.estellas-furniture.woodlands-furniture-set-a","name":"Woodlands Furniture Set A","badges":["Hanging Gardens"],"after":"A Call From the Gardens","needs":["Cauliflower ×6","Portobello Mushrooms ×8"]},
         {"id":"inspiration.estellas-furniture.woodlands-furniture-set-b","name":"Woodlands Furniture Set B","badges":["Hanging Gardens"],"after":"A Call From the Gardens","needs":["Cauliflower ×8","Oyster Mushrooms ×12"]},
-        {"id":"inspiration.estellas-furniture.upcycling-furniture-set-a","name":"Upcycling Furniture Set A","badges":["The Gridfall"],"after":"Everything Is Connected","needs":["Spinach ×10","Rice ×15"]},
-        {"id":"inspiration.estellas-furniture.upcycling-furniture-set-b","name":"Upcycling Furniture Set B","badges":["The Gridfall"],"after":"Everything Is Connected","needs":["Basil ×15","Chili Pepper ×10"]},
-        {"id":"inspiration.estellas-furniture.steampunk-furniture-set-a","name":"Steampunk Furniture Set A","badges":["The Gridfall"],"after":"Everything Is Connected","needs":["Used Fidget Spinner ×8","Used Walkboy ×6"]},
-        {"id":"inspiration.estellas-furniture.steampunk-furniture-set-b","name":"Steampunk Furniture Set B","badges":["The Gridfall"],"after":"Everything Is Connected","needs":["Used Gone Fishin' ×8","Used Ring Toss ×10"]},
-        {"id":"inspiration.estellas-furniture.gamer-furniture-set-a","name":"Gamer Furniture Set A","badges":["The Gridfall"],"after":"Everything Is Connected","needs":["Spotless Puzzle Cube ×4","Spotless Pet Pal ×6"]},
-        {"id":"inspiration.estellas-furniture.gamer-furniture-set-b","name":"Gamer Furniture Set B","badges":["The Gridfall"],"after":"Everything Is Connected","needs":["Used Game Guy ×10","Spotless Game Cartridge ×6"]},
-        {"id":"inspiration.estellas-furniture.graffiti-furniture-set-a","name":"Graffiti Furniture Set A","badges":["The Gridfall"],"after":"Everything Is Connected","needs":["Radish ×10","Pineapple ×15"]},
-        {"id":"inspiration.estellas-furniture.graffiti-furniture-set-b","name":"Graffiti Furniture Set B","badges":["The Gridfall"],"after":"Everything Is Connected","needs":["Radish ×10","Chili Pepper ×12"]}
+        {"id":"inspiration.estellas-furniture.upcycling-furniture-set-a","name":"Upcycling Furniture Set A","badges":["Gridfall"],"after":"Everything Is Connected","needs":["Spinach ×10","Rice ×15"]},
+        {"id":"inspiration.estellas-furniture.upcycling-furniture-set-b","name":"Upcycling Furniture Set B","badges":["Gridfall"],"after":"Everything Is Connected","needs":["Basil ×15","Chili Pepper ×10"]},
+        {"id":"inspiration.estellas-furniture.steampunk-furniture-set-a","name":"Steampunk Furniture Set A","badges":["Gridfall"],"after":"Everything Is Connected","needs":["Used Fidget Spinner ×8","Used Walkboy ×6"]},
+        {"id":"inspiration.estellas-furniture.steampunk-furniture-set-b","name":"Steampunk Furniture Set B","badges":["Gridfall"],"after":"Everything Is Connected","needs":["Used Gone Fishin' ×8","Used Ring Toss ×10"]},
+        {"id":"inspiration.estellas-furniture.gamer-furniture-set-a","name":"Gamer Furniture Set A","badges":["Gridfall"],"after":"Everything Is Connected","needs":["Spotless Puzzle Cube ×4","Spotless Pet Pal ×6"]},
+        {"id":"inspiration.estellas-furniture.gamer-furniture-set-b","name":"Gamer Furniture Set B","badges":["Gridfall"],"after":"Everything Is Connected","needs":["Used Game Guy ×10","Spotless Game Cartridge ×6"]},
+        {"id":"inspiration.estellas-furniture.graffiti-furniture-set-a","name":"Graffiti Furniture Set A","badges":["Gridfall"],"after":"Everything Is Connected","needs":["Radish ×10","Pineapple ×15"]},
+        {"id":"inspiration.estellas-furniture.graffiti-furniture-set-b","name":"Graffiti Furniture Set B","badges":["Gridfall"],"after":"Everything Is Connected","needs":["Radish ×10","Chili Pepper ×12"]}
       ]}
     ]},
     { "id": "recipes", "name": "Recipes", "icon": "📖", "color": 0, "cats": [
@@ -411,10 +411,10 @@
       { "id": "pets.rescues", "name": "Rescues", "icon": "🐶", "note": "Pets you rescue by finding clues and feeding them. You need a Basic Habitat for each pet you keep.", "items": [
         {"id":"pets.rescues.dog","name":"Dog","badges":["Quest","Hanging Gardens"],"after":"Field Research","needs":["Dog clues ×5","Lettuce ×4","Carrot ×2"]},
         {"id":"pets.rescues.cat","name":"Cat","badges":["Quest","Hanging Gardens"],"after":"Notes From the Fauna","needs":["Cat clues ×10","Cauliflower ×6","Watermelon ×3"]},
-        {"id":"pets.rescues.capybara","name":"Capybara","badges":["Quest","The Gridfall"],"after":"Mending What's Broken","needs":["Capybara clues ×30","Spinach ×10","Wild Greens ×10"]},
+        {"id":"pets.rescues.capybara","name":"Capybara","badges":["Quest","Gridfall"],"after":"Mending What's Broken","needs":["Capybara clues ×30","Spinach ×10","Wild Greens ×10"]},
         {"id":"pets.rescues.alpaca","name":"Alpaca","badges":["Exploration","Adventures"],"needs":["Alpaca clues ×50","Straw ×8","Garden Salad ×10"]},
         {"id":"pets.rescues.tortoise","name":"Tortoise","badges":["Exploration","Hanging Gardens"],"needs":["Tortoise clues ×50","Banana ×15","Ratatouille ×10"]},
-        {"id":"pets.rescues.duck","name":"Duck","badges":["Exploration","The Gridfall"],"needs":["Duck clues ×50","Vines ×20","Fruit Salad ×10"]}
+        {"id":"pets.rescues.duck","name":"Duck","badges":["Exploration","Gridfall"],"needs":["Duck clues ×50","Vines ×20","Fruit Salad ×10"]}
       ]},
       { "id": "pets.special", "name": "Special pets", "icon": "✨", "note": "Not obtainable through normal play", "items": [
         {"id":"pets.special.waddle","name":"Waddle","badges":["Kickstarter"]},
