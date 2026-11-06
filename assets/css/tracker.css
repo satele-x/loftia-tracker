@@ -229,3 +229,16 @@ select.sort{color:var(--ink)}
 .lc-up:active{transform:translateY(1px)}
 .lc-up.max{border-color:#c5ecd7;background:#e8f8ef;color:#2f8a60;cursor:default}
 .item.lvl-card.done{background:#f0fbf5}
+
+/* ---------- shops + wishlist ---------- */
+.qs.price{background:#e6f3ff;color:#2f6aa6;margin-right:4px;font-weight:800}
+.qs.price.bp{background:#fff3d6;color:#9a6a12}
+.qs.price.got{background:#e6f6ee;color:#2f7d4f}
+.savings{background:linear-gradient(135deg,#fff0f6,#fff8ec);border:2px dashed #f7b6cf;border-radius:18px;padding:12px 14px;margin:6px 0 14px}
+.save-row{margin-top:10px}
+.save-top{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;font-size:.92rem;margin-bottom:6px}
+.save-top>span{color:#8a6f86}
+.save-top .have{margin-left:auto;display:flex;align-items:center;gap:6px;font-weight:700;color:#8a6f86}
+.save-top .have input{width:110px;border:2px solid #f1d3e3;border-radius:12px;padding:6px 10px;font:inherit;font-weight:800;color:inherit;background:#fff}
+.save-top .have input:focus{outline:none;border-color:#e9719f}
+.savings .progress{width:100%}

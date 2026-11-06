@@ -121,6 +121,7 @@ function mergeItem(it, C) {
     done: (it.needs && it.needs.length) ? false : !!p.d, pinned: !!p.pin, fav: !!p.fav,
     pick: it.pick && it.needs && it.pick < it.needs.length ? it.pick : 0,  // "any N of these"
     badges: Array.isArray(it.badges) ? it.badges : [],
+    price: it.price != null ? String(it.price) : '', cur: (it.cur || C.currency || 'dew').toLowerCase(),
     // tiered upgrades: [{label, needs}] + how many tiers are done
     levels: (it.levels || []).map(l => ({ label: l.name, needs: l.needs || [] })),
     startLv: Math.min(it.startLv || 0, (it.levels || []).length),
@@ -143,7 +144,7 @@ function buildState() {
     m.cats.forEach(c => {
       if (U.hidden.cats[c.id]) return;
       const co = U.cats[c.id] || {};
-      const C = { id: c.id, official: true, name: co.name || c.name, icon: co.icon || c.icon, note: c.note || '', pipLabels: c.tags || [], ordered: !!c.ordered,
+      const C = { id: c.id, official: true, name: co.name || c.name, icon: co.icon || c.icon, note: c.note || '', pipLabels: c.tags || [], ordered: !!c.ordered, currency: c.currency || '',
         reset: co.reset !== undefined ? co.reset : (c.reset || ''),
         // server resets are stored in UTC in the data file so they're right in every timezone
         resetUtcHour: (co.resetHour == null && co.reset === undefined && c.resetUtcHour != null) ? c.resetUtcHour : null,
@@ -223,11 +224,25 @@ function save() {
   catch (e) { if (!saveFail) toast("⚠️ couldn't save — browser storage may be full"); saveFail = true; setPill('⚠️ not saved'); }
 }
 function setPill(t) { const p = $('#savePill'); if (p) p.textContent = t; }
-function rebuild() { state = buildState(); }
+function rebuild() { state = buildState(); indexTwins(); }
+// shop blueprints <-> the recipe that crafts them share a name: they act as one wish
+let TWINS = new Map();
+function indexTwins() {
+  TWINS = new Map();
+  state.menus.forEach(m => m.cats.forEach(c => c.items.forEach(it => {
+    if (!it.official) return;
+    const k = it.name.toLowerCase(), t = TWINS.get(k) || { shop: null, craft: null };
+    if (it.price && !t.shop) t.shop = { c, it }; else if (it.parts.length && !it.price && !t.craft) t.craft = { c, it };
+    TWINS.set(k, t);
+  })));
+}
+const shopTwin = it => { const t = TWINS.get(it.name.toLowerCase()); return t && t.shop && t.shop.it !== it ? t.shop : null; };
 
 /* ---------- derived ---------- */
 function curMenu() { return state.menus.find(m => m.id === U.ui.menu) || state.menus[0]; }
 function isNeeded() { return U.ui.menu === 'needed'; }
+function isWish() { return U.ui.menu === 'wish'; }
+function isSpecial() { return isNeeded() || isWish(); }
 function curCat() {
   const m = curMenu(); if (!m || !m.cats.length) return null;
   let c = m.cats.find(x => x.id === U.ui.cat[m.id]);
@@ -297,16 +312,16 @@ function renderTabs() {
   const pins = allPinned(), left = pins.filter(p => !isDone(p.c, p.it)).length;
   const h = state.menus.map(m => {
     const s = menuStats(m), col = MENU_COLORS[(m.color || 0) % MENU_COLORS.length];
-    return `<button class="tab ${!isNeeded() && m.id === curMenu().id ? 'on' : ''}" style="--tabc:${col[0]};--tabd:${col[1]}" data-act="menu" data-id="${esc(m.id)}"><span>${esc(m.icon)}</span>${esc(m.name)}<span class="cnt">${s.n}/${s.t}</span></button>`;
+    return `<button class="tab ${!isSpecial() && m.id === curMenu().id ? 'on' : ''}" style="--tabc:${col[0]};--tabd:${col[1]}" data-act="menu" data-id="${esc(m.id)}"><span>${esc(m.icon)}</span>${esc(m.name)}<span class="cnt">${s.n}/${s.t}</span></button>`;
   }).join('');
   const tabs = $('#tabs');
-  tabs.innerHTML = `<button class="tab ${isNeeded() ? 'on' : ''}" style="--tabc:#ffb3c8;--tabd:#ef7f9f" data-act="menu" data-id="needed"><span>📌</span>Pinned<span class="cnt">${left}</span></button>` + h + `<button class="tab add" data-act="addMenu">＋ new menu</button>`;
+  tabs.innerHTML = `<button class="tab ${isNeeded() ? 'on' : ''}" style="--tabc:#ffb3c8;--tabd:#ef7f9f" data-act="menu" data-id="needed"><span>📌</span>Pinned<span class="cnt">${left}</span></button><button class="tab ${isWish() ? 'on' : ''}" style="--tabc:#ffc4dc;--tabd:#e9719f" data-act="menu" data-id="wish"><span>💝</span>Wishlist<span class="cnt">${wishGoals().filter(g => !g.done).length}</span></button>` + h + `<button class="tab add" data-act="addMenu">＋ new menu</button>`;
   const on = tabs.querySelector('.tab.on'); // keep the active tab visible on phones
   if (on && tabs.scrollWidth > tabs.clientWidth) tabs.scrollLeft = on.offsetLeft - tabs.clientWidth / 2 + on.offsetWidth / 2;
 }
 function renderChips() {
   const el = $('#chips');
-  if (isNeeded()) { el.innerHTML = ''; el.style.display = 'none'; return; }
+  if (isSpecial()) { el.innerHTML = ''; el.style.display = 'none'; return; }
   el.style.display = '';
   const m = curMenu(), c = curCat();
   el.innerHTML = m.cats.map(x => {
@@ -317,6 +332,9 @@ function renderChips() {
 
 const CHECK_SVG = `<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3.2 3L13 4.5" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 const CURRENCY = { dew: '💧', bloom: '🌸' };
+const CUR_NAME = { dew: 'Dew', bloom: 'Bloom' };
+const priceRange = p => { const m = String(p).replace(/,/g, '').match(/(\d+)(?:\s*[–-]\s*(\d+))?/); return m ? [+m[1], +(m[2] || m[1])] : [0, 0]; };
+const fmtRange = (a, b) => a === b ? a.toLocaleString('en-US') : `${a.toLocaleString('en-US')}–${b.toLocaleString('en-US')}`;
 const priceTag = needs => needs.length ? needs.map(n => { const [nm, q] = splitQty(n); const ic = CURRENCY[nm.toLowerCase()]; return ic ? `${ic} ${q.toLocaleString('en-US')}` : esc(fmtQty(n)); }).join(' + ') : '?';
 function levelCard(c, it, where) {
   const n = it.levels.length, maxed = it.lv >= n, nx = it.levels[it.lv];
@@ -326,12 +344,12 @@ function levelCard(c, it, where) {
     track += `<button class="lv-dot ${i < it.lv ? 'on' : ''}" data-act="lvl" data-id="${esc(it.id)}" data-i="${i}" title="${esc(l.label)}${l.needs.length ? ' · ' + esc(l.needs.map(fmtQty).join(' + ')) : ''}" aria-label="${esc(l.label)}${i < it.lv ? ' (done)' : ''}"></button>`;
   });
   return `<div class="item lvl-card ${maxed ? 'done' : ''} ${it.pinned ? 'pinned' : ''}">
-    ${it.pinned ? '<span class="fav-badge">📌</span>' : it.fav ? '<span class="fav-badge">⭐</span>' : ''}
+    ${it.pinned ? '<span class="fav-badge">📌</span>' : it.fav ? '<span class="fav-badge">💝</span>' : ''}
     <div class="lc-top">
       <div class="txt">${where ? `<div class="where">${where}</div>` : ''}<div class="nm">${esc(it.name)}</div>${it.note ? `<div class="note">${esc(it.note)}</div>` : ''}${it.myNote ? `<div class="mynote">📝 ${esc(it.myNote)}</div>` : ''}</div>
       <div class="acts">
         <button class="pin ${it.pinned ? 'on' : ''}" data-act="pin" data-id="${esc(it.id)}" title="${it.pinned ? 'Unpin' : 'Pin — add the next upgrade to your gather list'}" aria-label="${it.pinned ? 'Unpin' : 'Pin'} ${esc(it.name)}">${it.pinned ? '📌' : '📍'}</button>
-        <button class="fav ${it.fav ? 'on' : ''}" data-act="fav" data-id="${esc(it.id)}" title="Favourite" aria-label="Favourite ${esc(it.name)}">${it.fav ? '⭐' : '☆'}</button>
+        <button class="fav ${it.fav ? 'on' : ''}" data-act="fav" data-id="${esc(it.id)}" title="${it.fav ? 'Remove from wishlist' : 'Add to wishlist'}" aria-label="${it.fav ? 'Remove' : 'Add'} ${esc(it.name)} ${it.fav ? 'from' : 'to'} wishlist">${it.fav ? '💝' : '🤍'}</button>
         <button data-act="editItem" data-id="${esc(it.id)}" title="Notes" aria-label="Edit ${esc(it.name)}">✏️</button>
       </div>
     </div>
@@ -359,17 +377,19 @@ function itemCard(c, it, where) {
     if (dep === false) { locked = true; status = `<div class="qs lock">🔒 after “${esc(it.after)}”</div>`; }
     else if (SHOW_AVAILABLE) status = `<div class="qs open">✨ available</div>`;
   }
+  if (it.price) status = `<span class="qs price ${d ? 'got' : ''}">${d ? '✓ bought · ' : ''}${CURRENCY[it.cur] || ''} ${esc(it.price)}</span>` + status;
+  else { const tw = shopTwin(it); if (tw) { const got = isDone(tw.c, tw.it); status = `<span class="qs price bp ${got ? 'got' : ''}" title="${got ? 'Blueprint bought' : 'Blueprint from ' + esc(tw.c.name)}">${got ? '✓ blueprint' : `${CURRENCY[tw.it.cur] || ''} ${esc(tw.it.price)} blueprint`}</span>` + status; } }
   if (it.badges && it.badges.length) status = it.badges.map(b => `<span class="qs badge badge-${esc(String(b).toLowerCase().replace(/[^a-z0-9]+/g, '-'))}">${esc(b)}</span>`).join(' ') + status;
   if (it.pick) { const on = it.parts.filter(p => p.on).length; status += `<div class="qs pick">${Math.min(on, it.pick)}/${it.pick} — pick any ${it.pick}</div>`; }
   if (!d && !locked && c.ordered && c.items.find(x => !isDone(c, x)) === it) next = true;
   return `<div class="item ${d ? 'done' : ''} ${it.pinned ? 'pinned' : ''} ${locked ? 'locked' : ''} ${next ? 'next' : ''} ${dots ? 'has-levels' : ''}">${dots}
     ${next ? '<span class="next-badge">▶ next up</span>' : ''}
-    ${it.pinned ? '<span class="fav-badge">📌</span>' : it.fav ? '<span class="fav-badge">⭐</span>' : ''}
+    ${it.pinned ? '<span class="fav-badge">📌</span>' : it.fav ? '<span class="fav-badge">💝</span>' : ''}
     <button class="check" data-act="toggle" data-id="${esc(it.id)}" aria-label="${d ? 'Untick' : 'Tick'} ${esc(it.name)}">${CHECK_SVG}</button>
     <div class="txt">${where ? `<div class="where">${where}</div>` : ''}<div class="nm">${esc(it.name)}${SHOW_NEW_BADGES && NEW.has(it.id) ? '<span class="new-pill">new!</span>' : ''}${!it.official ? '<span class="mine">✎ mine</span>' : ''}</div>${it.note ? `<div class="note">${esc(it.note)}</div>` : ''}${it.myNote ? `<div class="mynote">📝 ${esc(it.myNote)}</div>` : ''}${status}${tags}</div>
     <div class="acts">
       <button class="pin ${it.pinned ? 'on' : ''}" data-act="pin" data-id="${esc(it.id)}" title="${it.pinned ? 'Unpin' : 'Pin — keep it in your Pinned tab'}" aria-label="${it.pinned ? 'Unpin' : 'Pin'} ${esc(it.name)}">${it.pinned ? '📌' : '📍'}</button>
-      <button class="fav ${it.fav ? 'on' : ''}" data-act="fav" data-id="${esc(it.id)}" title="Favourite" aria-label="Favourite ${esc(it.name)}">${it.fav ? '⭐' : '☆'}</button>
+      <button class="fav ${it.fav ? 'on' : ''}" data-act="fav" data-id="${esc(it.id)}" title="${it.fav ? 'Remove from wishlist' : 'Add to wishlist'}" aria-label="${it.fav ? 'Remove' : 'Add'} ${esc(it.name)} ${it.fav ? 'from' : 'to'} wishlist">${it.fav ? '💝' : '🤍'}</button>
       <button data-act="editItem" data-id="${esc(it.id)}" title="Edit / notes" aria-label="Edit ${esc(it.name)}">✏️</button>
     </div>
   </div>`;
@@ -419,8 +439,69 @@ function renderNeeded() {
     `}`;
 }
 
+function wishGoals() {
+  const goals = new Map();
+  state.menus.forEach(m => m.cats.forEach(c => c.items.forEach(it => {
+    if (!it.fav) return;
+    const k = it.official && TWINS.has(it.name.toLowerCase()) ? 'n:' + it.name.toLowerCase() : 'i:' + it.id;
+    const g = goals.get(k) || { name: it.name, members: [] };
+    g.members.push({ m, c, it }); goals.set(k, g);
+  })));
+  return [...goals.values()].map(g => (g.done = g.members.every(x => isDone(x.c, x.it)), g));
+}
+function renderWish() {
+  const v = $('#catView'), goals = wishGoals(), hide = U.ui.hideDone;
+  const cost = {}, tally = new Map();
+  const addCost = (cur, a, b) => { const x = cost[cur] = cost[cur] || [0, 0]; x[0] += a; x[1] += b; };
+  goals.forEach(g => g.members.forEach(({ c, it }) => {
+    if (isDone(c, it)) return;
+    if (it.price) { const [a, b] = priceRange(it.price); addCost(it.cur, a, b); return; }
+    it.parts.forEach(p => {
+      if (p.on) return;
+      const [n, q] = splitQty(p.label), k = n.toLowerCase();
+      if (CUR_NAME[k]) { addCost(k, q, q); return; }
+      const t = tally.get(k) || { n, q: 0, qtyKnown: /[×x]\s*\d+\s*$/i.test(p.label), for: [] };
+      t.q += q; t.for.push(it.name); tally.set(k, t);
+    });
+  }));
+  const gather = [...tally.values()].sort((a, b) => a.n.localeCompare(b.n));
+  U.ui.have = U.ui.have || {};
+  const curs = Object.keys(cost).sort((a, b) => (a === 'dew' ? -1 : 1));
+  const savings = curs.map(cur => {
+    const [lo, hi] = cost[cur], have = +U.ui.have[cur] || 0, pct = hi ? Math.min(100, Math.round(have / hi * 100)) : 100;
+    const left = Math.max(0, hi - have);
+    return `<div class="save-row">
+      <div class="save-top"><b>${CURRENCY[cur]} ${CUR_NAME[cur]}</b><span>need <b>${fmtRange(lo, hi)}</b></span>
+        <label class="have">I have <input type="number" min="0" inputmode="numeric" data-have="${cur}" value="${have || ''}" placeholder="0" aria-label="${CUR_NAME[cur]} you have"></label></div>
+      <div class="progress"><div class="bar"><i style="width:${pct}%"></i></div><span class="pct">${left ? `${left.toLocaleString('en-US')} to go` : 'you can afford it all! ✨'}</span></div>
+    </div>`;
+  }).join('');
+  const done = goals.filter(g => g.done).length, pct = goals.length ? Math.round(done / goals.length * 100) : 0;
+  const shown = goals.filter(g => !hide || !g.done);
+  const groups = new Map();
+  shown.forEach(g => g.members.forEach(p => { if (!groups.has(p.c.id)) groups.set(p.c.id, { m: p.m, c: p.c, items: [] }); groups.get(p.c.id).items.push(p.it); }));
+  const order = new Map(); let i = 0; state.menus.forEach(m => m.cats.forEach(c => order.set(c.id, i++)));
+  const rank = g => (g.c.currency ? 0 : 1e6) + order.get(g.c.id); // shops first: buy the blueprint, then craft
+  const grp = [...groups.values()].sort((a, b) => rank(a) - rank(b));
+  v.innerHTML = `
+    <div class="cat-head">
+      <h2>💝 Wishlist</h2>
+      <div class="progress"><div class="bar"><i style="width:${pct}%"></i></div><span class="pct">${done}/${goals.length} · ${pct}%</span></div>
+      ${done ? `<button class="small-btn" data-act="unwishDone">✓ clear finished</button>` : ''}
+    </div>
+    <div class="toolbar"><label class="toggle"><input type="checkbox" id="hideDone" ${hide ? 'checked' : ''}> hide done</label></div>
+    ${goals.length === 0 ? `<div class="empty"><div class="big">🤍</div>Your wishlist is empty!<br>Tap the <b>🤍</b> on anything you'd love to have — a blueprint in the 🛍️ Shops tab, a recipe, an outfit. Wishing a blueprint adds its recipe too, so you see both the price and the materials ✨</div>` : `
+      ${savings ? `<div class="savings"><div class="gather-h">🐷 Saving up <span>for the stuff you haven't bought yet</span></div>${savings}</div>` : ''}
+      ${gather.length ? `<div class="gather"><div class="gather-h">🧺 Materials to craft it all <span>${gather.length} thing${gather.length === 1 ? '' : 's'}</span></div>
+        <div class="gather-list">${gather.map(g => `<span class="g" title="for: ${esc(g.for.join(', '))}">${esc(g.n)}${g.qtyKnown ? ` <b>×${g.q.toLocaleString('en-US')}</b>` : ''}</span>`).join('')}</div>
+        <div class="hint">Tick the blueprint when you buy it and the materials as you gather them — the totals shrink as you go.</div></div>` : ''}
+      ${grp.map(g => `<div class="grp-h">${esc(g.c.icon)} ${esc(g.c.name)} <span>· ${esc(g.m.name)}</span></div><div class="list">${g.items.map(it => itemCard(g.c, it)).join('')}</div>`).join('') || `<div class="empty"><div class="big">🎉</div>Every wish came true!</div>`}
+    `}`;
+}
+
 function renderCat() {
   if (isNeeded()) return renderNeeded();
+  if (isWish()) return renderWish();
   const c = curCat(), v = $('#catView');
   if (!c) { v.innerHTML = `<div class="empty"><div class="big">🌤️</div>This menu has no categories yet — add one above!</div>`; return; }
   const s = catStats(c), pct = s.total ? Math.round(s.n / s.total * 100) : 0;
@@ -453,7 +534,7 @@ function renderCat() {
         <option value="order" ${sort === 'order' ? 'selected' : ''}>list order</option>
         <option value="az" ${sort === 'az' ? 'selected' : ''}>A → Z</option>
         <option value="todo" ${sort === 'todo' ? 'selected' : ''}>to-do first</option>
-        <option value="fav" ${sort === 'fav' ? 'selected' : ''}>⭐ first</option>
+        <option value="fav" ${sort === 'fav' ? 'selected' : ''}>💝 first</option>
         <option value="pin" ${sort === 'pin' ? 'selected' : ''}>📌 first</option>
       </select>
     </div>
@@ -463,6 +544,11 @@ function renderCat() {
 
 function renderBubble() {
   const b = $('#bubble');
+  if (isWish()) {
+    const g = wishGoals(), left = g.filter(x => !x.done).length;
+    b.textContent = !g.length ? 'tap 🤍 on anything you dream of & i\'ll save up with you 💝' : left ? `${left} dream${left === 1 ? '' : 's'} on the list — keep farming 💸` : 'every wish came true!! 🎉';
+    return;
+  }
   if (isNeeded()) {
     const pins = allPinned(), left = pins.filter(p => !isDone(p.c, p.it)).length;
     b.textContent = !pins.length ? "pin what you're working on & i'll keep it here 📌" : left ? `${left} thing${left === 1 ? '' : 's'} on the go — you got this 🍊` : 'every pinned thing is done!! 🎉';
@@ -501,7 +587,13 @@ document.addEventListener('click', e => {
   else if (act === 'lvl' && hit) { const before = isDone(hit.c, hit.it), i = +t.dataset.i; hit.it.lv = hit.it.lv === i + 1 ? i : i + 1; afterChange(hit.c, before, isDone(hit.c, hit.it), t, hit.it); }
   else if (act === 'pip' && hit) { const before = isDone(hit.c, hit.it), i = +t.dataset.i; hit.it.pips[i] = !hit.it.pips[i]; afterChange(hit.c, before, isDone(hit.c, hit.it), t, hit.it); }
   else if (act === 'part' && hit) { const before = isDone(hit.c, hit.it), p = hit.it.parts[+t.dataset.i]; p.on = !p.on; afterChange(hit.c, before, isDone(hit.c, hit.it), t, hit.it); }
-  else if (act === 'fav' && hit) { hit.it.fav = !hit.it.fav; save(); renderCat(); }
+  else if (act === 'fav' && hit) {
+    const on = !hit.it.fav; hit.it.fav = on;
+    const t = TWINS.get(hit.it.name.toLowerCase()); // wishing a blueprint wishes its recipe too (and back)
+    if (t && hit.it.official) [t.shop, t.craft].forEach(x => { if (x) x.it.fav = on; });
+    save(); render(); toast(on ? '💝 added to your wishlist' : 'removed from wishlist');
+  }
+  else if (act === 'unwishDone') { wishGoals().forEach(g => { if (g.done) g.members.forEach(x => { x.it.fav = false; }); }); save(); render(); toast('tidied up ✨'); }
   else if (act === 'pin' && hit) { hit.it.pinned = !hit.it.pinned; save(); render(); toast(hit.it.pinned ? '📌 pinned!' : 'unpinned'); }
   else if (act === 'unpinDone') { allPinned().forEach(p => { if (isDone(p.c, p.it)) p.it.pinned = false; }); save(); render(); toast('tidied up ✨'); }
   else if (act === 'editItem' && hit) openItemModal(hit);
@@ -533,6 +625,7 @@ document.addEventListener('change', e => {
   if (e.target.id === 'hideDone') { U.ui.hideDone = e.target.checked; save(); renderCat(); }
   if (e.target.id === 'pinOnly') { U.ui.pinOnly = e.target.checked; save(); renderCat(); }
   if (e.target.id === 'sort') { U.ui.sort = e.target.value; save(); renderCat(); }
+  if (e.target.dataset && e.target.dataset.have) { U.ui.have = U.ui.have || {}; U.ui.have[e.target.dataset.have] = Math.max(0, Math.floor(+e.target.value || 0)); save(); renderCat(); }
 });
 document.addEventListener('submit', e => {
   if (e.target.id !== 'addForm') return;
@@ -541,7 +634,7 @@ document.addEventListener('submit', e => {
   curCat().items.push(parseLine(v)); save(); render(); $('#newItem').focus(); toast('added ✨');
 });
 function parseLine(line) { const m = line.split(/\s+[-–—|]\s+/); return customItem({ name: m[0].trim(), note: m.slice(1).join(' - ').trim() }); }
-$('#menuSettingsBtn').onclick = () => { if (!state) return; if (isNeeded()) { toast('pick a menu tab to edit it 🙂'); return; } openMenuModal(curMenu()); };
+$('#menuSettingsBtn').onclick = () => { if (!state) return; if (isSpecial()) { toast('pick a menu tab to edit it 🙂'); return; } openMenuModal(curMenu()); };
 $('#backupBtn').onclick = () => { if (state) openBackupModal(); };
 
 /* ---------- modals ---------- */
@@ -839,7 +932,7 @@ async function boot() {
   // dailies + countdown
   setInterval(() => {
     if (checkResets()) { save(); render(); toast('🔁 dailies refreshed — new day!'); return; }
-    const c = !isNeeded() && curCat(), p = document.querySelector('.reset-pill');
+    const c = !isSpecial() && curCat(), p = document.querySelector('.reset-pill');
     if (c && c.reset && p) p.textContent = '🔁 resets in ' + fmtLeft(nextBoundary(c, Date.now()) - Date.now());
   }, 60000);
 }
