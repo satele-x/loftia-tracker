@@ -179,7 +179,23 @@ select.sort{color:var(--ink)}
 .item.done .qs.pick{background:#d4f3e3;color:#2f8a60}
 .cat-note{margin:-4px 2px 12px;font-size:13px;font-weight:800;color:var(--ink-soft)}
 .gather-pick{font-size:13px;font-weight:700;margin-top:8px;line-height:1.45}
-.qs.badge{background:#e3f1ff;color:#2b6ea3;margin-right:4px;text-transform:lowercase}
+.qs.badge{background:#e3f1ff;color:#2b6ea3;margin-right:4px}
+/* research pages */
+.qs.badge-page-1{background:#ffe6f1;color:#b8487a}
+.qs.badge-page-2{background:#fff0d9;color:#a8651c}
+.qs.badge-page-3{background:#ece4ff;color:#6a4fb3}
+/* station levels (recipes) */
+.qs.badge[class*="station-lv-1"]{background:#e6f6ee;color:#2f7d4f}
+.qs.badge[class*="station-lv-2"]{background:#e3f1ff;color:#2b6ea3}
+.qs.badge[class*="station-lv-3"]{background:#ece4ff;color:#6a4fb3}
+/* locations */
+.qs.badge-loftia-city{background:#e0efff;color:#2d6aa8}
+.qs.badge-hanging-gardens{background:#dcf4e3;color:#2c7a49}
+.qs.badge-the-gridfall{background:#fbe4df;color:#a5483a}
+.qs.badge-quest{background:#ece4ff;color:#6a4fb3}
+.qs.badge-exploration{background:#ddf5e6;color:#2f7d4f}
+.qs.badge-dlc{background:#fff0d6;color:#a8651c}
+.qs.badge-kickstarter{background:#ffe3ee;color:#b23d6c}
 
 /* tiered upgrades (housing permits etc.) */
 .item.has-levels{padding-bottom:22px}
