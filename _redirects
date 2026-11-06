@@ -1,0 +1,3 @@
+# Old folder-style links → new pages (Cloudflare serves /loftia.html at /loftia)
+/loftia/   /loftia   301
+/stardew/  /stardew  301

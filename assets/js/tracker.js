@@ -28,6 +28,8 @@ const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&a
 const clone = o => JSON.parse(JSON.stringify(o));
 const splitQty = label => { const m = String(label).match(/^(.*?)\s*[×x]\s*(\d+)\s*$/i); return m ? [m[1].trim(), +m[2]] : [String(label).trim(), 1]; };
 const partKey = label => splitQty(label)[0].toLowerCase();
+// "Dew ×10000" -> "Dew ×10,000" for display
+const fmtQty = label => { const [n, q] = splitQty(label); return /[×x]\s*\d+\s*$/i.test(label) ? `${n} ×${q.toLocaleString('en-US')}` : label; };
 
 const EMOJIS = ['🍳','🧵','🪚','🔧','⚗️','🛠️','🪴','🌱','🍰','🍜','🧋','🐟','🏺','📟','💭','🐾','👗','🪑','🧸','🌸','⭐','💎','🗝️','📝','☀️','🌙','🎀','🍓','🦋','🐚','🎣','🏝️','📜','🔬','💡','🔁'];
 const MENU_COLORS = [['#ff9ec7','#f472a8'],['#9fd5ff','#5bb2ee'],['#9be7c4','#4cc794'],['#c9b6ff','#9b83f0'],['#ffc2a1','#f59a6c'],['#ffe08a','#e6b93b']];
@@ -118,11 +120,15 @@ function mergeItem(it, C) {
     pips: C.pipLabels.map((_, i) => !!(p.p && p.p[i])),
     done: (it.needs && it.needs.length) ? false : !!p.d, pinned: !!p.pin, fav: !!p.fav,
     pick: it.pick && it.needs && it.pick < it.needs.length ? it.pick : 0,  // "any N of these"
-    badges: Array.isArray(it.badges) ? it.badges : []
+    badges: Array.isArray(it.badges) ? it.badges : [],
+    // tiered upgrades: [{label, needs}] + how many tiers are done
+    levels: (it.levels || []).map(l => ({ label: l.name, needs: l.needs || [] })),
+    lv: Math.min(p.lv || 0, (it.levels || []).length)
   };
 }
 const customItem = x => ({ id: x.id || rid(), official: false, name: x.name || '?', note: x.note || '', myNote: '', after: x.after || '',
-  parts: (x.parts || []).map(p => ({ label: p.label, on: !!p.on })), pips: (x.pips || []).map(Boolean), done: !!x.done, pinned: !!x.pinned, fav: !!x.fav });
+  parts: (x.parts || []).map(p => ({ label: p.label, on: !!p.on })), pips: (x.pips || []).map(Boolean), done: !!x.done, pinned: !!x.pinned, fav: !!x.fav,
+  badges: [], levels: (x.levels || []).map(l => ({ label: l.label, needs: l.needs || [] })), lv: x.lv || 0 });
 const customCat = x => ({ id: x.id || rid(), official: false, name: x.name || 'List', icon: x.icon || '⭐', pipLabels: x.pipLabels || [], ordered: !!x.ordered,
   reset: x.reset || '', resetHour: x.resetHour || 0, resetDay: x.resetDay != null ? x.resetDay : 1, lastReset: x.lastReset || 0, items: (x.items || []).map(customItem) });
 const customMenu = x => ({ id: x.id || rid(), official: false, name: x.name || 'My list', icon: x.icon || '⭐', color: x.color || 0, cats: (x.cats || []).map(customCat) });
@@ -155,7 +161,8 @@ function buildState() {
 }
 
 /* ---------- state  →  U (only the visitor's own bits) ---------- */
-const stripItem = I => ({ id: I.id, name: I.name, note: I.note, after: I.after || undefined, parts: I.parts.map(p => ({ label: p.label, on: p.on })), pips: I.pips, done: I.done, pinned: I.pinned, fav: I.fav });
+const stripItem = I => ({ id: I.id, name: I.name, note: I.note, after: I.after || undefined, parts: I.parts.map(p => ({ label: p.label, on: p.on })), pips: I.pips, done: I.done, pinned: I.pinned, fav: I.fav,
+  levels: I.levels && I.levels.length ? I.levels : undefined, lv: I.lv || undefined });
 const stripCat = C => ({ id: C.id, name: C.name, icon: C.icon, pipLabels: C.pipLabels, ordered: C.ordered, reset: C.reset, resetHour: C.resetHour, resetDay: C.resetDay, lastReset: C.lastReset, items: C.items.map(stripItem) });
 function persist() {
   const items = Object.assign({}, U.items), cats = Object.assign({}, U.cats), menus = Object.assign({}, U.menus);
@@ -186,6 +193,7 @@ function persist() {
         if (I.done) p.d = 1;
         if (I.pinned) p.pin = 1;
         if (I.fav) p.fav = 1;
+        if (I.lv) p.lv = I.lv;
         if (I.myNote) p.note = I.myNote;
         if (I.pips.some(Boolean)) p.p = I.pips.map(b => b ? 1 : 0);
         const pk = {}; I.parts.forEach(pt => { if (pt.on) pk[partKey(pt.label)] = 1; });
@@ -225,12 +233,14 @@ function curCat() {
   return c;
 }
 function units(c, it) {
+  if (it.levels && it.levels.length) return [it.lv, it.levels.length];
   if (it.parts.length) { const on = it.parts.filter(p => p.on).length, need = it.pick || it.parts.length; return [Math.min(on, need), need]; }
   if (c.pipLabels.length) return [c.pipLabels.filter((_, i) => it.pips[i]).length, c.pipLabels.length];
   return [it.done ? 1 : 0, 1];
 }
 const isDone = (c, it) => { const u = units(c, it); return u[0] === u[1]; };
 function setAll(c, it, val) {
+  if (it.levels && it.levels.length) { it.lv = val ? it.levels.length : 0; return; }
   if (it.parts.length) it.parts.forEach(p => { p.on = val; });
   else if (c.pipLabels.length) it.pips = c.pipLabels.map(() => val);
   else it.done = val;
@@ -296,8 +306,14 @@ function renderChips() {
 const CHECK_SVG = `<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3.2 3L13 4.5" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 function itemCard(c, it, where) {
   const d = isDone(c, it);
-  let tags = '';
-  if (it.parts.length) tags = `<div class="pips">${it.parts.map((p, i) => `<button class="pip part ${p.on ? 'on' : ''}" data-act="part" data-id="${esc(it.id)}" data-i="${i}" aria-pressed="${p.on}">${esc(p.label)}</button>`).join('')}</div>`;
+  let tags = '', dots = '';
+  if (it.levels && it.levels.length) {
+    tags = `<div class="tiers">${it.levels.map((l, i) => {
+      const st = i < it.lv ? 'done' : i === it.lv ? 'next' : '';
+      return `<div class="tier ${st}"><span class="tier-n">${i < it.lv ? '✓' : i === it.lv ? '→' : '·'} ${esc(l.label)}</span><span class="tier-c">${l.needs.length ? l.needs.map(n => esc(fmtQty(n))).join(' + ') : 'cost not listed yet'}</span></div>`;
+    }).join('')}</div>`;
+    dots = `<div class="lv-dots" role="group" aria-label="${esc(it.name)} progress: ${it.lv} of ${it.levels.length}">${it.levels.map((l, i) => `<button class="lv-dot ${i < it.lv ? 'on' : ''}" data-act="lvl" data-id="${esc(it.id)}" data-i="${i}" title="${esc(l.label)}" aria-label="${esc(l.label)}${i < it.lv ? ' (done)' : ''}"></button>`).join('')}</div>`;
+  } else if (it.parts.length) tags = `<div class="pips">${it.parts.map((p, i) => `<button class="pip part ${p.on ? 'on' : ''}" data-act="part" data-id="${esc(it.id)}" data-i="${i}" aria-pressed="${p.on}">${esc(p.label)}</button>`).join('')}</div>`;
   else if (c.pipLabels.length) tags = `<div class="pips">${c.pipLabels.map((p, i) => `<button class="pip ${it.pips[i] ? 'on' : ''}" data-act="pip" data-id="${esc(it.id)}" data-i="${i}" aria-pressed="${!!it.pips[i]}">${esc(p)}</button>`).join('')}</div>`;
   let status = '', locked = false, next = false;
   if (!d && it.after) {
@@ -308,7 +324,7 @@ function itemCard(c, it, where) {
   if (it.badges && it.badges.length) status = it.badges.map(b => `<span class="qs badge">${esc(b)}</span>`).join(' ') + status;
   if (it.pick) { const on = it.parts.filter(p => p.on).length; status += `<div class="qs pick">${Math.min(on, it.pick)}/${it.pick} — pick any ${it.pick}</div>`; }
   if (!d && !locked && c.ordered && c.items.find(x => !isDone(c, x)) === it) next = true;
-  return `<div class="item ${d ? 'done' : ''} ${it.pinned ? 'pinned' : ''} ${locked ? 'locked' : ''} ${next ? 'next' : ''}">
+  return `<div class="item ${d ? 'done' : ''} ${it.pinned ? 'pinned' : ''} ${locked ? 'locked' : ''} ${next ? 'next' : ''} ${dots ? 'has-levels' : ''}">${dots}
     ${next ? '<span class="next-badge">▶ next up</span>' : ''}
     ${it.pinned ? '<span class="fav-badge">📌</span>' : it.fav ? '<span class="fav-badge">⭐</span>' : ''}
     <button class="check" data-act="toggle" data-id="${esc(it.id)}" aria-label="${d ? 'Untick' : 'Tick'} ${esc(it.name)}">${CHECK_SVG}</button>
@@ -327,6 +343,11 @@ function renderNeeded() {
   const tally = new Map();
   const picks = [];
   pins.forEach(({ it }) => {
+    if (it.levels.length) {
+      const nx = it.levels[it.lv]; if (!nx) return;
+      nx.needs.forEach(lbl => { const [n, q] = splitQty(lbl), k = n.toLowerCase(); const t = tally.get(k) || { n, q: 0, qtyKnown: /[×x]\s*\d+\s*$/i.test(lbl), for: [] }; t.q += q; t.for.push(`${it.name} → ${nx.label}`); tally.set(k, t); });
+      return;
+    }
     if (it.pick) {
       const left = it.pick - it.parts.filter(p => p.on).length;
       if (left > 0) picks.push({ name: it.name, left, opts: it.parts.filter(p => !p.on).map(p => p.label) });
@@ -353,7 +374,7 @@ function renderNeeded() {
     <div class="toolbar"><label class="toggle"><input type="checkbox" id="hideDone" ${hide ? 'checked' : ''}> hide done</label></div>
     ${pins.length === 0 ? `<div class="empty"><div class="big">📍</div>Nothing pinned yet!<br>Tap the <b>📍</b> on any quest, bundle or recipe to add it here — it's your “working on it right now” list. Pin a story quest and the pin hops to the next one when you finish it ✨</div>` : `
       ${gather.length || picks.length ? `<div class="gather"><div class="gather-h">🧺 Stuff to gather <span>${gather.length + picks.length} thing${gather.length + picks.length === 1 ? '' : 's'}</span></div>
-        <div class="gather-list">${gather.map(g => `<span class="g" title="for: ${esc(g.for.join(', '))}">${esc(g.n)}${g.qtyKnown ? ` <b>×${g.q}</b>` : (g.for.length > 1 ? ` <b>(${g.for.length} bundles)</b>` : '')}</span>`).join('')}</div>
+        <div class="gather-list">${gather.map(g => `<span class="g" title="for: ${esc(g.for.join(', '))}">${esc(g.n)}${g.qtyKnown ? ` <b>×${g.q.toLocaleString('en-US')}</b>` : (g.for.length > 1 ? ` <b>(${g.for.length} bundles)</b>` : '')}</span>`).join('')}</div>
         ${picks.map(pk => `<div class="gather-pick"><b>${esc(pk.name)}:</b> any ${pk.left} more of ${esc(pk.opts.join(', '))}</div>`).join('')}
         <div class="hint">Unticked items from your pinned entries, added up. Tick them off on the cards below as you hand them in.</div></div>` : ''}
       ${[...groups.values()].map(g => `<div class="grp-h">${esc(g.c.icon)} ${esc(g.c.name)} <span>· ${esc(g.m.name)}</span></div><div class="list">${g.items.map(it => itemCard(g.c, it)).join('')}</div>`).join('') || `<div class="empty"><div class="big">🎉</div>Everything you pinned is done!</div>`}
@@ -432,7 +453,13 @@ document.addEventListener('click', e => {
   const hit = t.dataset.id && act !== 'menu' && act !== 'cat' ? locate(t.dataset.id) : null;
   if (act === 'menu') { U.ui.menu = t.dataset.id; U.ui.q = ''; save(); render(); }
   else if (act === 'cat') { U.ui.cat[curMenu().id] = t.dataset.id; U.ui.q = ''; save(); render(); }
-  else if (act === 'toggle' && hit) { const before = isDone(hit.c, hit.it); setAll(hit.c, hit.it, !before); afterChange(hit.c, before, isDone(hit.c, hit.it), t, hit.it); }
+  else if (act === 'toggle' && hit) {
+    const before = isDone(hit.c, hit.it);
+    if (hit.it.levels.length) hit.it.lv = before ? 0 : hit.it.lv + 1; // tiered: each tick climbs one tier
+    else setAll(hit.c, hit.it, !before);
+    afterChange(hit.c, before, isDone(hit.c, hit.it), t, hit.it);
+  }
+  else if (act === 'lvl' && hit) { const before = isDone(hit.c, hit.it), i = +t.dataset.i; hit.it.lv = hit.it.lv === i + 1 ? i : i + 1; afterChange(hit.c, before, isDone(hit.c, hit.it), t, hit.it); }
   else if (act === 'pip' && hit) { const before = isDone(hit.c, hit.it), i = +t.dataset.i; hit.it.pips[i] = !hit.it.pips[i]; afterChange(hit.c, before, isDone(hit.c, hit.it), t, hit.it); }
   else if (act === 'part' && hit) { const before = isDone(hit.c, hit.it), p = hit.it.parts[+t.dataset.i]; p.on = !p.on; afterChange(hit.c, before, isDone(hit.c, hit.it), t, hit.it); }
   else if (act === 'fav' && hit) { hit.it.fav = !hit.it.fav; save(); renderCat(); }

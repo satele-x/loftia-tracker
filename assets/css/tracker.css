@@ -180,3 +180,17 @@ select.sort{color:var(--ink)}
 .cat-note{margin:-4px 2px 12px;font-size:13px;font-weight:800;color:var(--ink-soft)}
 .gather-pick{font-size:13px;font-weight:700;margin-top:8px;line-height:1.45}
 .qs.badge{background:#e3f1ff;color:#2b6ea3;margin-right:4px;text-transform:lowercase}
+
+/* tiered upgrades (housing permits etc.) */
+.item.has-levels{padding-bottom:22px}
+.lv-dots{position:absolute;right:12px;bottom:8px;display:flex;gap:5px}
+.lv-dot{width:10px;height:10px;border-radius:50%;background:#eadff0;padding:0;transition:transform .15s,background .15s}
+.lv-dot:hover{transform:scale(1.3)}
+.lv-dot.on{background:var(--mint-d)}
+.tiers{margin-top:6px;display:grid;gap:2px}
+.tier{display:flex;gap:8px;font-size:12px;font-weight:700;color:var(--ink-soft);line-height:1.35}
+.tier-n{min-width:74px;white-space:nowrap}
+.tier.done{color:#7fae97;text-decoration:line-through;text-decoration-color:#bfe4cf}
+.tier.next{color:var(--ink);font-weight:800}
+.tier.next .tier-c{color:var(--pink-d)}
+.item.done .tier.done{text-decoration:none}

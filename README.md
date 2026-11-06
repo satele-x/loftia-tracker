@@ -5,22 +5,20 @@ Cute, free progress trackers for cozy games. It's a plain static site with no bu
 ```
 /
 ├── index.html              home page (game picker)
+├── loftia.html             Loftia logbook   → yoursite/loftia
+├── stardew.html            Stardew bundles  → yoursite/stardew
 ├── 404.html                "lost in the clouds" page
-├── favicon.svg
 ├── _headers                security + caching headers (Cloudflare Pages reads this)
-├── loftia/index.html       the Loftia logbook page
-├── data/
-│   ├── games.json          list of games shown on the home page
-│   ├── loftia.json         ← THE LOFTIA LISTS (edit this to update the site)
+├── _redirects              keeps old /loftia/ and /stardew/ links working
+├── data/                   ← EVERYTHING YOU EDIT LIVES HERE
+│   ├── games.json          games shown on the home page
+│   ├── loftia.json         the Loftia lists
+│   ├── stardew.json        the Stardew bundles
 │   └── _template.json      starter file for a new game
 ├── assets/
-│   ├── css/base.css        shared theme, header, footer
-│   ├── css/home.css        home page
-│   ├── css/tracker.css     logbook page
-│   ├── js/sky.js           drifting clouds
-│   ├── js/home.js          builds the game cards
-│   ├── js/tracker.js       the logbook engine
-│   └── img/capy.svg        the capybara mascot
+│   ├── css/                base.css (shared) · home.css · tracker.css
+│   ├── js/                 sky.js · home.js · tracker.js (the logbook engine)
+│   └── img/                capy.svg mascot · favicon-32/512.png · apple-touch-icon.png
 └── tools/
     ├── validate.mjs        checks the data files before you deploy
     └── format-data.mjs     tidies a data file (one entry per line)
@@ -71,12 +69,12 @@ Changing a `needs` amount (`Carrot ×4` → `Carrot ×5`) keeps the tick, becaus
 
 ## Adding another game 🎮
 1. Copy `data/_template.json` to `data/<gameid>.json` and fill it in.
-2. Copy the `loftia/` folder to `<gameid>/` and change `data-game="loftia"` and the `<title>` in its `index.html`.
+2. Copy `loftia.html` to `<gameid>.html`, then change `data-game="loftia"`, the `<title>`, the description and the footer credit.
 3. Add the game to `data/games.json`.
 4. Run `node tools/validate.mjs`.
 
 ## Running it locally
-Pages fetch their JSON, so opening the file directly (`file://`) won't work. Run a tiny local server from this folder instead:
+Pages fetch their JSON, so opening the file directly (`file://`) won't work. Run a tiny local server from this folder instead (locally the pages are `/loftia.html`; on Cloudflare they're also at `/loftia`):
 ```
 python3 -m http.server 8000      # then open http://localhost:8000
 # or:  npx serve .

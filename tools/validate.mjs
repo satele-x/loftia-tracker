@@ -31,10 +31,10 @@ if (games) {
   for (const g of games.games || []) {
     if (!ID_RE.test(g.id || '')) err(`games.json: bad game id "${g.id}"`);
     const dataFile = path.join(root, 'data', `${g.id}.json`);
-    const page = path.join(root, g.id, 'index.html');
+    const page = path.join(root, `${g.id}.html`);
     if (!fs.existsSync(dataFile)) err(`games.json lists "${g.id}" but data/${g.id}.json is missing`);
-    if (!fs.existsSync(page)) err(`games.json lists "${g.id}" but ${g.id}/index.html is missing`);
-    else if (!fs.readFileSync(page, 'utf8').includes(`data-game="${g.id}"`)) err(`${g.id}/index.html: <body data-game="${g.id}"> doesn't match`);
+    if (!fs.existsSync(page)) err(`games.json lists "${g.id}" but ${g.id}.html is missing`);
+    else if (!fs.readFileSync(page, 'utf8').includes(`data-game="${g.id}"`)) err(`${g.id}.html: <body data-game="${g.id}"> doesn't match`);
   }
 }
 
@@ -76,6 +76,8 @@ for (const f of fs.readdirSync(path.join(root, 'data'))) {
         if (it.needs && c.tags) warn(where(`${ictx}: has both "needs" and category "tags" — "needs" wins`));
         if (it.pick != null && (!Number.isInteger(it.pick) || it.pick < 1 || !it.needs || it.pick > it.needs.length)) err(where(`${ictx}: "pick" must be a whole number between 1 and the number of "needs"`));
         if (it.badges && (!Array.isArray(it.badges) || it.badges.some(b => typeof b !== 'string'))) err(where(`${ictx}: "badges" must be a list of text, e.g. ["quest"]`));
+        if (it.levels && (!Array.isArray(it.levels) || it.levels.some(l => !l || !l.name || (l.needs && !Array.isArray(l.needs))))) err(where(`${ictx}: "levels" must be a list like [{"name":"Limit 2","needs":["Dew ×125"]}]`));
+        if (it.levels && (it.needs || c.tags)) warn(where(`${ictx}: has "levels" plus "needs"/tags — "levels" wins`));
         if (it.after) afters.push([it.after, ictx]);
         const n = (it.name || '').toLowerCase();
         if (local.has(n)) warn(where(`${ictx}: same name appears twice in this category`));

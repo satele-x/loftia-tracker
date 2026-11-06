@@ -1,7 +1,7 @@
 {
   "game": "loftia",
   "name": "Loftia",
-  "version": "2026.11.06h",
+  "version": "2026.11.06j",
   "updated": "2026-11-06",
   "gameVersion": "Early Access",
   "sources": [{"name":"Loftia Codex","url":"https://loftiacodex.com/"},{"name":"Cluefile recipes","url":"https://cluefile.com/loftia/data/recipes/"},{"name":"Loftians inspiration guide","url":"https://loftians.com/guides/loftia-inspiration-guide/"},{"name":"Wikily fish list","url":"https://wikily.gg/loftia/fish"}],
@@ -38,17 +38,15 @@
         {"id":"quests.main-story.the-shroom-next-door","name":"The Shroom Next Door","note":"#27 · with Pebble, Dr. Marie"},
         {"id":"quests.main-story.too-many-spores-spoil-the-soup","name":"Too Many Spores Spoil the Soup","note":"#28 · 5 parts · with Kassim, Dr. Marie, Atlas, Amani, Hazel, Pebble & more","needs":["Blind Date","Bloom and Gloom","Hope.exe","Never Too Mush","Rooting for Survival"]}
       ]},
-      { "id": "quests.pebble", "name": "Pebble", "icon": "🐾", "ordered": true, "items": [
-        {"id":"quests.pebble.the-extremely-secret-surprise","name":"The Extremely Secret Surprise","note":"with Pebble","after":"The First Sprout"},
-        {"id":"quests.pebble.let-the-pebblethon-begin","name":"Let the Pebblethon Begin","note":"with Pebble","after":"The Extremely Secret Surprise"},
-        {"id":"quests.pebble.pebblethon-the-bonk-challenge","name":"Pebblethon: The Bonk Challenge","note":"with Pebble","after":"Let the Pebblethon Begin"},
-        {"id":"quests.pebble.pebblethon-the-bounce-challenge","name":"Pebblethon: The Bounce Challenge","note":"with Pebble","after":"Pebblethon: The Bonk Challenge"}
+      { "id": "quests.amani", "name": "Amani", "icon": "🌱", "ordered": true, "items": [
+        {"id":"quests.amani.ready-for-the-rumble","name":"Ready for the Rumble","note":"with Amani","after":"Permission to Glide"},
+        {"id":"quests.amani.your-daily-do-good","name":"Your Daily Do-Good","note":"with Amani","after":"Ready for the Rumble"}
       ]},
-      { "id": "quests.linda", "name": "Linda", "icon": "🧵", "ordered": true, "items": [
-        {"id":"quests.linda.first-stitch","name":"First Stitch","note":"with Linda","after":"City Tour"},
-        {"id":"quests.linda.a-thread-of-inspiration","name":"A Thread of Inspiration","note":"with Linda","after":"First Stitch"},
-        {"id":"quests.linda.our-first-collection","name":"Our First Collection","note":"with Linda","after":"A Thread of Inspiration"},
-        {"id":"quests.linda.project-runway","name":"Project Runway","note":"with Linda","after":"Our First Collection"}
+      { "id": "quests.atlas", "name": "Atlas", "icon": "🗺️", "ordered": true, "items": [
+        {"id":"quests.other-characters.lost-in-translation","name":"Lost in Translation","note":"with Atlas","after":"The Art of Letting Go"}
+      ]},
+      { "id": "quests.cella", "name": "Cella", "icon": "💎", "ordered": true, "items": [
+        {"id":"quests.other-characters.the-real-treasure","name":"The Real Treasure","note":"with Cella","after":"A Call From the Gardens"}
       ]},
       { "id": "quests.estella", "name": "Estella", "icon": "🪑", "ordered": true, "items": [
         {"id":"quests.estella.home-decor-crisis","name":"Home Décor Crisis","note":"with Estella","after":"City Tour"},
@@ -56,25 +54,41 @@
         {"id":"quests.estella.home-sweet-home","name":"Home Sweet Home","note":"with Estella","after":"Creative Block"},
         {"id":"quests.estella.cozy-corners","name":"Cozy Corners","note":"with Estella","after":"Home Sweet Home"}
       ]},
-      { "id": "quests.amani", "name": "Amani", "icon": "🌱", "ordered": true, "items": [
-        {"id":"quests.amani.ready-for-the-rumble","name":"Ready for the Rumble","note":"with Amani","after":"Permission to Glide"},
-        {"id":"quests.amani.your-daily-do-good","name":"Your Daily Do-Good","note":"with Amani","after":"Ready for the Rumble"}
+      { "id": "quests.hazel", "name": "Hazel", "icon": "🦋", "ordered": true, "items": [
+        {"id":"quests.other-characters.ivy-investigation","name":"Ivy Investigation","note":"with Hazel","after":"Everything Is Connected"}
+      ]},
+      { "id": "quests.herb-and-arlo", "name": "Herb & Arlo", "icon": "🌿", "ordered": true, "items": [
+        {"id":"quests.other-characters.food-for-all","name":"Food for All","note":"with Herb & Arlo","after":"A Call From the Gardens"}
+      ]},
+      { "id": "quests.joanna", "name": "Joanna", "icon": "🦊", "ordered": true, "items": [
+        {"id":"quests.other-characters.fur-real","name":"Fur Real?","note":"with Joanna","after":"Notes From the Fauna"},
+        {"id":"quests.other-characters.fur-ther-investigation","name":"Fur-ther Investigation","note":"with Mita & Joanna","after":"Mending What's Broken"}
+      ]},
+      { "id": "quests.kassim", "name": "Kassim", "icon": "🎣", "ordered": true, "items": [
+        {"id":"quests.other-characters.community-effort","name":"Community Effort","note":"with Kassim","after":"Everything Is Connected"}
+      ]},
+      { "id": "quests.kun-and-jun", "name": "Kun & Jun", "icon": "🍜", "ordered": true, "items": [
+        {"id":"quests.other-characters.the-shared-table","name":"The Shared Table","note":"with Kun & Jun","after":"Adventure Awaits!"}
       ]},
       { "id": "quests.leela", "name": "Leela", "icon": "💃", "ordered": true, "items": [
         {"id":"quests.leela.dance-class","name":"Dance Class","note":"with Leela","after":"The Case of the Missing Curator"},
         {"id":"quests.leela.slip-zip-hooray","name":"Slip, Zip, Hooray!","note":"with Leela","after":"Dance Class"}
       ]},
-      { "id": "quests.other-characters", "name": "Other characters", "icon": "💌", "items": [
-        {"id":"quests.other-characters.the-shared-table","name":"The Shared Table","note":"with Kun & Jun","after":"Adventure Awaits!"},
-        {"id":"quests.other-characters.food-for-all","name":"Food for All","note":"with Herb & Arlo","after":"A Call From the Gardens"},
+      { "id": "quests.linda", "name": "Linda", "icon": "🧵", "ordered": true, "items": [
+        {"id":"quests.linda.first-stitch","name":"First Stitch","note":"with Linda","after":"City Tour"},
+        {"id":"quests.linda.a-thread-of-inspiration","name":"A Thread of Inspiration","note":"with Linda","after":"First Stitch"},
+        {"id":"quests.linda.our-first-collection","name":"Our First Collection","note":"with Linda","after":"A Thread of Inspiration"},
+        {"id":"quests.linda.project-runway","name":"Project Runway","note":"with Linda","after":"Our First Collection"}
+      ]},
+      { "id": "quests.milo", "name": "Milo", "icon": "☕", "ordered": true, "items": [
         {"id":"quests.other-characters.its-on-the-house","name":"It's On the House","note":"with Milo","after":"A Call From the Gardens"},
-        {"id":"quests.other-characters.the-real-treasure","name":"The Real Treasure","note":"with Cella","after":"A Call From the Gardens"},
-        {"id":"quests.other-characters.community-effort","name":"Community Effort","note":"with Kassim","after":"Everything Is Connected"},
-        {"id":"quests.other-characters.ivy-investigation","name":"Ivy Investigation","note":"with Hazel","after":"Everything Is Connected"},
-        {"id":"quests.other-characters.fur-real","name":"Fur Real?","note":"with Joanna","after":"Notes From the Fauna"},
-        {"id":"quests.other-characters.home-is-where-the-leak-is","name":"Home Is Where the Leak Is","note":"with Milo & Dr. Marie","after":"The Case of the Missing Curator"},
-        {"id":"quests.other-characters.lost-in-translation","name":"Lost in Translation","note":"with Atlas","after":"The Art of Letting Go"},
-        {"id":"quests.other-characters.fur-ther-investigation","name":"Fur-ther Investigation","note":"with Mita & Joanna","after":"Mending What's Broken"}
+        {"id":"quests.other-characters.home-is-where-the-leak-is","name":"Home Is Where the Leak Is","note":"with Milo & Dr. Marie","after":"The Case of the Missing Curator"}
+      ]},
+      { "id": "quests.pebble", "name": "Pebble", "icon": "🐾", "ordered": true, "items": [
+        {"id":"quests.pebble.the-extremely-secret-surprise","name":"The Extremely Secret Surprise","note":"with Pebble","after":"The First Sprout"},
+        {"id":"quests.pebble.let-the-pebblethon-begin","name":"Let the Pebblethon Begin","note":"with Pebble","after":"The Extremely Secret Surprise"},
+        {"id":"quests.pebble.pebblethon-the-bonk-challenge","name":"Pebblethon: The Bonk Challenge","note":"with Pebble","after":"Let the Pebblethon Begin"},
+        {"id":"quests.pebble.pebblethon-the-bounce-challenge","name":"Pebblethon: The Bounce Challenge","note":"with Pebble","after":"Pebblethon: The Bonk Challenge"}
       ]}
     ]},
     { "id": "research", "name": "Research", "icon": "🔬", "color": 1, "cats": [
@@ -409,6 +423,25 @@
         {"id":"pets.habitats.habitat-permit-2","name":"Habitat Permit (2nd habitat)","needs":["Dew ×500"]},
         {"id":"pets.habitats.habitat-permit-3","name":"Habitat Permit (3rd habitat)","needs":["Dew ×2500","Bloom ×10"]},
         {"id":"pets.habitats.habitat-permit-4","name":"Habitat Permit (4th habitat)","needs":["Dew ×5000","Bloom ×25"]}
+      ]}
+    ]},
+    { "id": "housing", "name": "Housing Upgrades", "icon": "🏠", "color": 4, "cats": [
+      { "id": "housing.permits", "name": "Building Permits", "icon": "🏗️", "note": "Bought from Amani in Loftia City with Dew and Bloom. Tick a card or tap a dot to move up a tier.", "items": [
+        {"id":"housing.permits.energy-stations","name":"Energy Stations","note":"How many energy stations (solar, wind, hydro, biofuel) you can place · starts at 1","levels":[{"name":"Limit 2","needs":["Dew ×125"]},{"name":"Limit 3","needs":["Dew ×1000"]},{"name":"Limit 4","needs":["Dew ×2500","Bloom ×5"]},{"name":"Limit 5","needs":["Dew ×5000","Bloom ×10"]}]},
+        {"id":"housing.permits.garden-beds","name":"Garden Beds","note":"How many garden beds you can place · starts at 1","levels":[{"name":"Limit 2","needs":["Dew ×25"]},{"name":"Limit 3","needs":["Dew ×500"]},{"name":"Limit 4","needs":["Dew ×5000","Bloom ×10"]},{"name":"Limit 6","needs":["Dew ×15000","Bloom ×25"]}]},
+        {"id":"housing.permits.hydrofarms","name":"Hydrofarms","note":"How many hydrofarms you can place · starts at 1 (locked at first)","levels":[{"name":"Limit 2","needs":["Dew ×2500"]},{"name":"Limit 3","needs":["Dew ×5000","Bloom ×10"]},{"name":"Limit 4","needs":["Dew ×10000","Bloom ×25"]},{"name":"Limit 5","needs":["Dew ×20000","Bloom ×50"]}]},
+        {"id":"housing.permits.island-slots","name":"Island Slots","note":"How many island slots you get for your home · starts at 1 (locked at first)","levels":[{"name":"Limit 2","needs":["Dew ×10000","Bloom ×10"]},{"name":"Limit 3","needs":["Dew ×20000","Bloom ×25"]}]},
+        {"id":"housing.permits.mannequins","name":"Mannequins","note":"How many mannequins you can place · starts at 1 (locked at first)","levels":[{"name":"Limit 2","needs":["Dew ×1000"]},{"name":"Limit 3","needs":["Dew ×2500","Bloom ×10"]},{"name":"Limit 4","needs":["Dew ×5000","Bloom ×25"]}]},
+        {"id":"housing.permits.other-placeables","name":"Other Placeables","note":"Furniture and decorations that aren't in another category · starts at 50","levels":[{"name":"Limit 75","needs":["Dew ×175"]},{"name":"Limit 100","needs":["Dew ×2500"]},{"name":"Limit 125","needs":["Dew ×5000","Bloom ×5"]},{"name":"Limit 150","needs":["Dew ×10000","Bloom ×10"]}]},
+        {"id":"housing.permits.pet-habitats","name":"Pet Habitats","note":"How many pet habitats (and so pets) you can place · starts at 1 (locked at first)","levels":[{"name":"Limit 2","needs":["Dew ×500"]},{"name":"Limit 3","needs":["Dew ×2500","Bloom ×10"]},{"name":"Limit 4","needs":["Dew ×5000","Bloom ×25"]}]},
+        {"id":"housing.permits.processing-stations","name":"Processing Stations","note":"How many processing stations (refining, cooking, etc.) you can place · starts at 1 (locked at first)","levels":[{"name":"Limit 2","needs":["Dew ×300"]},{"name":"Limit 4","needs":["Dew ×2500"]},{"name":"Limit 6","needs":["Dew ×5000","Bloom ×5"]},{"name":"Limit 8","needs":["Dew ×10000","Bloom ×10"]}]},
+        {"id":"housing.permits.structural-items","name":"Structural Items","note":"Walls, columns, arches and other building pieces · starts at 10 (locked at first)","levels":[{"name":"Limit 15","needs":["Dew ×500"]},{"name":"Limit 20","needs":["Dew ×1000"]},{"name":"Limit 25","needs":["Dew ×5000","Bloom ×5"]},{"name":"Limit 30","needs":["Dew ×10000","Bloom ×10"]}]},
+        {"id":"housing.permits.tree-plots","name":"Tree Plots","note":"How many tree plots you can place · starts at 2 (locked at first)","levels":[{"name":"Limit 3","needs":["Dew ×500"]},{"name":"Limit 4","needs":["Dew ×2500"]},{"name":"Limit 5","needs":["Dew ×5000","Bloom ×10"]},{"name":"Limit 6","needs":["Dew ×10000","Bloom ×25"]}]},
+        {"id":"housing.permits.trellises","name":"Trellises","note":"How many trellises you can place · starts at 2 (locked at first)","levels":[{"name":"Limit 3","needs":["Dew ×1000"]},{"name":"Limit 4","needs":["Dew ×2500"]},{"name":"Limit 5","needs":["Dew ×5000","Bloom ×10"]},{"name":"Limit 6","needs":["Dew ×10000","Bloom ×25"]}]}
+      ]},
+      { "id": "housing.house", "name": "House", "icon": "🏡", "note": "Customising your home and island", "items": [
+        {"id":"housing.house.house-customization","name":"House Customization","note":"Unlocks the Architect Station: remodel roofs, swap facades, build interior walls · reward: 3 Walls + 3 Columns","badges":["quest"],"after":"It's On the House"},
+        {"id":"housing.house.milos-renovation-shop","name":"Milo's Renovation Shop","note":"Sells house styles, bridges, signs, walls and flooring (priced in verdium) · Level 2 adds the Solarpunk House and Autumn Island","levels":[{"name":"Level 2","needs":[]}]}
       ]}
     ]},
     { "id": "dailies", "name": "Dailies", "icon": "🔁", "color": 2, "cats": [
