@@ -1,7 +1,7 @@
 {
   "game": "loftia",
   "name": "Loftia",
-  "version": "2026.11.06o",
+  "version": "2026.11.06p",
   "updated": "2026-11-06",
   "gameVersion": "Early Access",
   "sources": [{"name":"Loftia Codex","url":"https://loftiacodex.com/"},{"name":"Cluefile recipes","url":"https://cluefile.com/loftia/data/recipes/"},{"name":"Loftians inspiration guide","url":"https://loftians.com/guides/loftia-inspiration-guide/"},{"name":"Wikily fish list","url":"https://wikily.gg/loftia/fish"}],
@@ -411,8 +411,8 @@
       { "id": "pets.rescues", "name": "Rescues", "icon": "🐶", "note": "Pets you rescue by finding clues and feeding them. You need a Basic Habitat for each pet you keep.", "items": [
         {"id":"pets.rescues.dog","name":"Dog","badges":["Quest","Hanging Gardens"],"after":"Field Research","needs":["Dog clues ×5","Lettuce ×4","Carrot ×2"]},
         {"id":"pets.rescues.cat","name":"Cat","badges":["Quest","Hanging Gardens"],"after":"Notes From the Fauna","needs":["Cat clues ×10","Cauliflower ×6","Watermelon ×3"]},
-        {"id":"pets.rescues.capybara","name":"Capybara","badges":["Quest","Loftia City"],"after":"Mending What's Broken","needs":["Capybara clues ×30","Spinach ×10","Wild Greens ×10"]},
-        {"id":"pets.rescues.alpaca","name":"Alpaca","badges":["Exploration","Loftia City"],"needs":["Alpaca clues ×50","Straw ×8","Garden Salad ×10"]},
+        {"id":"pets.rescues.capybara","name":"Capybara","badges":["Quest","The Gridfall"],"after":"Mending What's Broken","needs":["Capybara clues ×30","Spinach ×10","Wild Greens ×10"]},
+        {"id":"pets.rescues.alpaca","name":"Alpaca","badges":["Exploration","Adventures"],"needs":["Alpaca clues ×50","Straw ×8","Garden Salad ×10"]},
         {"id":"pets.rescues.tortoise","name":"Tortoise","badges":["Exploration","Hanging Gardens"],"needs":["Tortoise clues ×50","Banana ×15","Ratatouille ×10"]},
         {"id":"pets.rescues.duck","name":"Duck","badges":["Exploration","The Gridfall"],"needs":["Duck clues ×50","Vines ×20","Fruit Salad ×10"]}
       ]},
