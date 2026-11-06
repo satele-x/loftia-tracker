@@ -1,7 +1,7 @@
 {
   "game": "loftia",
   "name": "Loftia",
-  "version": "2026.11.06k",
+  "version": "2026.11.06l",
   "updated": "2026-11-06",
   "gameVersion": "Early Access",
   "sources": [{"name":"Loftia Codex","url":"https://loftiacodex.com/"},{"name":"Cluefile recipes","url":"https://cluefile.com/loftia/data/recipes/"},{"name":"Loftians inspiration guide","url":"https://loftians.com/guides/loftia-inspiration-guide/"},{"name":"Wikily fish list","url":"https://wikily.gg/loftia/fish"}],
@@ -331,14 +331,14 @@
       { "id": "recipes.station-upgrades", "name": "Stations", "icon": "⬆️", "note": "Upgrade a station using its Upgrade option once the recipe is unlocked", "items": [
         {"id":"recipes.station-upgrades.project-station-lv-2","name":"Project Station Lv. 2","note":"7 energy","after":"Anadromous Odyssey","needs":["Copper Scraps ×3","Screws ×5","Scrap Wire ×5"]},
         {"id":"recipes.station-upgrades.refining-station-lv-2","name":"Refining Station Lv. 2","note":"7 energy","badges":["research reward"],"after":"Anadromous Odyssey","needs":["Screws ×10","Metal Plate ×2","Plank ×2"]},
-        {"id":"recipes.station-upgrades.carpentry-station-lv-2","name":"Carpentry Station Lv. 2","note":"materials not listed yet","after":"Craftcore"},
-        {"id":"recipes.station-upgrades.tailoring-station-lv-2","name":"Tailoring Station Lv. 2","note":"materials not listed yet","after":"Eco Weave"},
-        {"id":"recipes.station-upgrades.cooking-station-lv-2","name":"Cooking Station Lv. 2","note":"materials not listed yet","after":"Forest Cook"},
-        {"id":"recipes.station-upgrades.project-station-lv-3","name":"Project Station Lv. 3","note":"unlock & materials not listed yet"},
-        {"id":"recipes.station-upgrades.refining-station-lv-3","name":"Refining Station Lv. 3","note":"materials not listed yet","badges":["research reward"]},
+        {"id":"recipes.station-upgrades.carpentry-station-lv-2","name":"Carpentry Station Lv. 2","note":"7 energy","after":"Craftcore","needs":["Screws ×10","Flexible Lumber ×2"]},
+        {"id":"recipes.station-upgrades.tailoring-station-lv-2","name":"Tailoring Station Lv. 2","note":"7 energy","after":"Eco Weave","needs":["Screws ×10","Recycled Polyester ×2"]},
+        {"id":"recipes.station-upgrades.cooking-station-lv-2","name":"Cooking Station Lv. 2","note":"7 energy","after":"Forest Cook","needs":["Screws ×10","Copper Bar ×2"]},
+        {"id":"recipes.station-upgrades.project-station-lv-3","name":"Project Station Lv. 3","note":"10 energy","needs":["Electronic Scraps ×5","Rusted Metal ×2","Scrap Wire ×10"]},
+        {"id":"recipes.station-upgrades.refining-station-lv-3","name":"Refining Station Lv. 3","note":"10 energy","badges":["research reward"],"needs":["Gears ×5","Magnets ×5","Power Cable ×2"]},
         {"id":"recipes.station-upgrades.carpentry-station-lv-3","name":"Carpentry Station Lv. 3","note":"10 energy","after":"Sturdy Foundations","needs":["Eco Plank ×4","Screws ×10","Magnets ×5"]},
         {"id":"recipes.station-upgrades.tailoring-station-lv-3","name":"Tailoring Station Lv. 3","note":"10 energy","after":"Thrifty Textiles","needs":["Upcycled Fabric ×4","Screws ×10","Circuit Boards ×2"]},
-        {"id":"recipes.station-upgrades.cooking-station-lv-3","name":"Cooking Station Lv. 3","after":"Urban Eats","needs":["Bricks ×4","Screws ×10","Power Cable ×2"]}
+        {"id":"recipes.station-upgrades.cooking-station-lv-3","name":"Cooking Station Lv. 3","after":"Urban Eats","needs":["Bricks ×4","Screws ×10","Power Cable ×2"],"note":"10 energy"}
       ]}
     ]},
     { "id": "collections", "name": "Collections", "icon": "🐚", "color": 3, "cats": [
