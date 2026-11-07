@@ -217,7 +217,7 @@ select.sort{color:var(--ink)}
 .lvl-card .lc-top{display:flex;align-items:flex-start;gap:8px}
 .lvl-card .lc-top .txt{flex:1}
 .lvl-card .nm{font-family:var(--font-display);font-size:18px;font-weight:600}
-.lvl-card .lc-bottom{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.lvl-card .lc-bottom{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
 .lv-track{display:flex;align-items:center}
 .lvl-card .lv-dot{width:18px;height:18px;border:2.5px solid #d9cde3;background:#f3eef7;border-radius:50%;padding:0;flex:none;transition:transform .15s,background .15s}
 .lvl-card .lv-dot.on{background:var(--mint);border-color:var(--mint-d)}

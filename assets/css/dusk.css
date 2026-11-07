@@ -1,0 +1,105 @@
+/* ==========================================================
+   satele's logbook — dusk theme (night mode)
+   Switched on by /assets/js/theme.js → <html data-theme="dusk">
+   ========================================================== */
+.theme-btn{width:38px;height:38px;border-radius:12px;background:#ffffffb0;font-size:18px;display:grid;place-items:center;flex:none;transition:transform .15s}
+.theme-btn:hover{transform:rotate(-12deg) scale(1.06)}
+.site-nav + .theme-btn{margin-left:8px}
+.site-head .in > .brand + .theme-btn{margin-left:auto}
+.star{display:none}
+
+html[data-theme="dusk"]{
+  --sky1:#1f1a3a; --sky2:#3a2a55; --sky3:#7a4a6a;
+  --ink:#ece6f7; --ink-soft:#b3a8c9; --card:#2a2442e6; --line:#3f3660;
+  --pink:#e87fae; --pink-d:#c45a8c; --mint:#5fbf98; --mint-d:#3d9c76;
+  --lav:#9d86e8; --lav-d:#b9a6ff; --butter:#e8c56a; --peach:#e89f7c; --sky:#6aa8d8;
+  color-scheme:dark;
+}
+html[data-theme="dusk"] body{
+  background:
+    radial-gradient(120% 60% at 50% 115%, #ff9a7a55 0%, #d0688a33 35%, transparent 70%),
+    linear-gradient(180deg,var(--sky1) 0%,var(--sky2) 55%,var(--sky3) 100%) fixed;
+}
+html[data-theme="dusk"] .star{display:block;position:absolute;width:3px;height:3px;border-radius:50%;background:#fff6d8;box-shadow:0 0 6px #fff3c4;animation:twinkle 3s ease-in-out infinite}
+@keyframes twinkle{0%,100%{opacity:.2}50%{opacity:.9}}
+html[data-theme="dusk"] .cloud,html[data-theme="dusk"] .cloud::before,html[data-theme="dusk"] .cloud::after{background:#c79ac8}
+html[data-theme="dusk"] .cloud{opacity:.13}
+html[data-theme="dusk"] .island{opacity:.25!important;filter:saturate(.6) brightness(.8)}
+@media (prefers-reduced-motion:reduce){ html[data-theme="dusk"] .star{animation:none} }
+
+/* surfaces that were white */
+html[data-theme="dusk"] .site-head{background:#1d1833b3;border-bottom-color:#ffffff14}
+html[data-theme="dusk"] .site-nav a:hover,html[data-theme="dusk"] .site-nav a[aria-current="page"]{background:#ffffff14}
+html[data-theme="dusk"] .theme-btn{background:#ffffff14}
+html[data-theme="dusk"] .panel{box-shadow:0 8px 30px #0005, 0 4px 0 #1a1530}
+html[data-theme="dusk"] .btn{background:#3a3158;color:var(--ink)}
+html[data-theme="dusk"] .btn.danger{background:#5a2a3a;color:#ffc2cf}
+html[data-theme="dusk"] .toast{background:#2f2848;color:var(--ink);box-shadow:0 8px 24px #0007}
+
+html[data-theme="dusk"] .bubble{background:#2f2848;box-shadow:0 3px 0 #1a1530}
+html[data-theme="dusk"] .bubble::before{border-right-color:#2f2848}
+html[data-theme="dusk"] .pill{background:#ffffff14}
+html[data-theme="dusk"] .icon-btn,html[data-theme="dusk"] .small-btn{background:#352d50;box-shadow:0 3px 0 #1a1530}
+html[data-theme="dusk"] .small-btn:hover{background:#3f3660}
+
+html[data-theme="dusk"] .tab{background:#2a2442b3;box-shadow:0 3px 0 #1a1530}
+html[data-theme="dusk"] .tab:hover{background:#352d50}
+html[data-theme="dusk"] .tab.on{color:#fff}
+html[data-theme="dusk"] .tab:not(.on) .cnt{background:#3f3660}
+html[data-theme="dusk"] .tab.add{background:transparent;border-color:#4a4070}
+
+html[data-theme="dusk"] .chip,html[data-theme="dusk"] .search,html[data-theme="dusk"] .toggle,html[data-theme="dusk"] select.sort{background:#2f2848}
+html[data-theme="dusk"] .chip .mini{background:#3f3660}
+html[data-theme="dusk"] .bar{background:#3a3158;box-shadow:inset 0 2px 0 #2a2442}
+html[data-theme="dusk"] .bar>i{background:repeating-linear-gradient(45deg,var(--mint) 0 10px,#7fd3b0 10px 20px)}
+html[data-theme="dusk"] .add-row input{background:#2f2848;border-color:#4a4070}
+
+/* cards */
+html[data-theme="dusk"] .item{background:#2f2848;border-color:#3a3158}
+html[data-theme="dusk"] .item:hover{border-color:#4f4478}
+html[data-theme="dusk"] .item.done,html[data-theme="dusk"] .item.lvl-card.done{background:#233a37;border-color:#2f5249}
+html[data-theme="dusk"] .item.done .nm{color:#8fc7ad;text-decoration-color:#4f8f73}
+html[data-theme="dusk"] .item.locked{background:#29233d}
+html[data-theme="dusk"] .item.pinned{border-color:#a8577b;box-shadow:0 0 0 2px #5a2f47}
+html[data-theme="dusk"] .item.next{border-color:#7a66c7;box-shadow:0 0 0 3px #3b3266}
+html[data-theme="dusk"] .check{background:#241f38;border-color:#5a4f80}
+html[data-theme="dusk"] .acts button:hover{background:#3a3158}
+html[data-theme="dusk"] .item .mynote{color:#f0a6c8}
+html[data-theme="dusk"] .item .fav-badge{filter:none}
+html[data-theme="dusk"] .pip,html[data-theme="dusk"] .pip.part{background:#3a3158;color:#b3a8c9}
+html[data-theme="dusk"] .qs.lock{background:#3a3158;color:#a79cc0}
+/* the pastel tags stay pastel, just a touch softer so they don't glare */
+html[data-theme="dusk"] .qs:not(.lock),html[data-theme="dusk"] .pip.on,html[data-theme="dusk"] .reset-pill,html[data-theme="dusk"] .new-pill{filter:brightness(.88) saturate(.95)}
+
+/* levels / permits */
+html[data-theme="dusk"] .lv-dot,html[data-theme="dusk"] .lvl-card .lv-dot{background:#3a3158;border-color:#5a4f80}
+html[data-theme="dusk"] .lv-dot.on,html[data-theme="dusk"] .lvl-card .lv-dot.on{background:var(--mint);border-color:var(--mint-d)}
+html[data-theme="dusk"] .lv-seg{background:#5a4f80}
+html[data-theme="dusk"] .lv-seg.on{background:var(--mint-d)}
+html[data-theme="dusk"] .lc-up{background:#43293d;border-color:#7a3f60;color:#ffb3d1}
+html[data-theme="dusk"] .lc-up:hover{background:#52304a}
+html[data-theme="dusk"] .lc-up.max{background:#233a37;border-color:#2f5249;color:#8fd6b4}
+
+/* gather / wishlist boxes */
+html[data-theme="dusk"] .gather{background:linear-gradient(135deg,#3a2f3a,#3a2a45);border-color:#8a6f3a}
+html[data-theme="dusk"] .savings{background:linear-gradient(135deg,#3f2a45,#3a2f3a);border-color:#8a4a6a}
+html[data-theme="dusk"] .gather-h span,html[data-theme="dusk"] .gather-list .g{background:#2a2442;box-shadow:0 2px 0 #1a1530}
+html[data-theme="dusk"] .save-top>span,html[data-theme="dusk"] .save-top .have{color:var(--ink-soft)}
+html[data-theme="dusk"] .save-top .have input{background:#241f38;border-color:#5a3f60}
+html[data-theme="dusk"] .warn-bar{background:#4a3f20;color:#ffe6a0}
+
+/* modals */
+html[data-theme="dusk"] .scrim{background:#0d0a1a99}
+html[data-theme="dusk"] .modal{background:#2a2442;box-shadow:0 20px 50px #000a}
+html[data-theme="dusk"] .field input,html[data-theme="dusk"] .field textarea{background:#241f38}
+html[data-theme="dusk"] .emoji-row button{background:#352d50}
+
+/* home page */
+html[data-theme="dusk"] .game-card{background:#2a2442;box-shadow:0 5px 0 #1a1530,0 10px 30px #0005}
+html[data-theme="dusk"] .game-card::before{background:linear-gradient(135deg,var(--gc,#4a3560),#2a2442);opacity:.45}
+html[data-theme="dusk"] .game-card .ic{background:#352d50;box-shadow:0 3px 0 #1a1530}
+html[data-theme="dusk"] .game-card .meta span{background:#3a3158}
+html[data-theme="dusk"] .game-card .meta .prog{background:#233a37;color:#8fd6b4}
+html[data-theme="dusk"] .game-card.soon,html[data-theme="dusk"] .game-card.skeleton{background:#2a244280;border-color:#4a4070}
+html[data-theme="dusk"] .how-card{box-shadow:0 4px 0 #1a1530}
+html[data-theme="dusk"] .hero h1,html[data-theme="dusk"] .title-block h1{filter:brightness(1.15)}

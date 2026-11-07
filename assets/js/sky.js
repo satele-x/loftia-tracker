@@ -9,5 +9,7 @@
   }
   const isl = (x, y, s, d) => `<svg class="island" style="left:${x}%;top:${y}%;width:${s}px;animation-delay:${d}s;opacity:.55" viewBox="0 0 100 70" aria-hidden="true"><ellipse cx="50" cy="22" rx="42" ry="10" fill="#9be7c4"/><path d="M10 22 Q50 80 90 22 Z" fill="#d7b48f"/><path d="M22 24 Q50 58 78 24Z" fill="#c49a70"/><circle cx="36" cy="10" r="9" fill="#7fd6a8"/><rect x="34.5" y="12" width="3" height="10" fill="#a07850"/><circle cx="62" cy="13" r="6" fill="#ffb3d1"/></svg>`;
   h += isl(3, 30, 90, 0) + isl(88, 58, 70, -2) + isl(80, 12, 50, -4);
+  // stars only show in dusk mode (see dusk.css)
+  for (let i = 0; i < 40; i++) h += `<i class="star" style="left:${Math.random() * 100}%;top:${Math.random() * 70}%;animation-delay:${-Math.random() * 3}s;transform:scale(${.5 + Math.random()})"></i>`;
   sky.innerHTML = h;
 })();
